@@ -154,11 +154,15 @@ var_10          = dword ptr -10h
 main            endp
 \end{lstlisting}
 
-\IFRU{Почти то же самое, за исключением того что в прологе функции мы видим \TT{AND ESP, 0FFFFFFF0h} ~--- 
+\IFRU{Почти то же самое. 
+Адрес строки "hello, world" лежащей в сегменте данных, в начале сохраняется в \EAX, затем записывается в стек.
+А еще в прологе функции мы видим \TT{AND ESP, 0FFFFFFF0h} ~--- 
 эта инструкция выравнивает значение в \ESP по 16-байтной границе, делая некоторые значения 
 в стеке также выровненными по этой границе (процессор более эффективно работает с переменными расположенными
 в памяти по адресам кратным 4 или 16)\footnote{\URLWPDA}.}
-{Almost the same, only sole exception that in function prologue we see \TT{AND ESP, 0FFFFFFF0h} ~--- 
+{Almost the same.
+Address of "hello world" string (stored in data segment) is saved in \EAX register first, then it stored into stack.
+Also, in function prologue we see \TT{AND ESP, 0FFFFFFF0h} ~--- 
 this instruction aligning \ESP value on 16-byte border, resulting some values in stack aligned too
 (CPU performing better if values it working with are located in memory at addresses aligned by 
 4 or 16 byte border)\URLWPDA.}

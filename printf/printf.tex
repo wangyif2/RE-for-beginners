@@ -31,14 +31,11 @@ $SG3830	DB	'a=%d; b=%d; c=%d', 00H
 \IFRU{Все почти то же, за исключением того, что теперь видно, что аргументы для \printf заталкиваются в стек в обратном порядке: самый первый аргумент заталкивается последним.}
 {Almost the same, but now we can see that \printf arguments are pushing into stack in reverse order: and the first argument is pushing in as the last one.}
 
-\IFRU
-{Всего 4 аргумента. 4*4 = 16 ~--- именно 16 байт занимают в стеке указатель на строку плюс еще 
-3 числа типа \Tint.}
-{Here 4 arguments. 4*4 = 16 ~--- exactly 16 byte they occupy in stack: 32-bit pointer to string and 
-3 number of \Tint type.}
+\IFRU{Кстати, вспомним что переменные типа \Tint в 32-битной системе, как известно, имеет ширину 32 бита, это 4 байта.}
+{By the way, variables of \Tint type in 32-bit environment has 32-bit width, that's 4 bytes.}
 
-\IFRU{Переменные типа \Tint в 32-битной системе, как известно, имеет ширину 32 бита.}
-{Variables of \Tint type in 32-bit environment has 32-bit width.}
+\IFRU{Итак, у нас всего 4 аргумента. 4*4 = 16 ~--- именно 16 байт занимают в стеке указатель на строку плюс еще 3 числа типа \Tint.}
+{So, we got here 4 arguments. 4*4 = 16 ~--- they occupy in stack exactly 16 bytes: 32-bit pointer to string and 3 number of \Tint type.}
 
 \IFRU{Когда при помощи инструкции \TT{ADD ESP, X} корректируется указатель стека \ESP 
 после вызова какой-либо функции, зачастую можно сделать вывод о том, сколько аргументов 
