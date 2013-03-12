@@ -20,15 +20,29 @@
 \usepackage{fancyvrb}
 \usepackage{xspace}
 \usepackage{framed}
+\usepackage{ccicons}
 
 \definecolor{lstbgcolor}{rgb}{0.94,0.94,0.94}
 
-\hypersetup{pdftex,colorlinks=true,allcolors=blue}
+\include{macros}
+
+\newcommand{\TITLE}{\IFRU{Краткое введение в reverse engineering для начинающих}
+{Quick introduction to reverse engineering for beginners}}
+\newcommand{\AUTHOR}{\IFRU{Денис Юричев}{Dennis Yurichev}}
+\newcommand{\EMAIL}{dennis@yurichev.com}
+
+\hypersetup{
+    pdftex,
+    colorlinks=true,
+    allcolors=blue,
+    pdfauthor={\AUTHOR},
+    pdftitle={\TITLE}
+    }
 
 \selectlanguage{english}
 \setcounter{chapter}{1}
 
-\lstset{ %
+\lstset{
     backgroundcolor=\color{lstbgcolor},
     basicstyle=\footnotesize\ttfamily,
     breaklines=true,
@@ -45,18 +59,36 @@
 
 \begin{document}
 
-\include{macros}
-
 \VerbatimFootnotes
 
 \frontmatter
-\title{\IFRU{Краткое введение в reverse engineering для начинающих}
-{Quick introduction to reverse engineering for beginners}}
 
-\author{\IFRU{Денис Юричев}{Dennis Yurichev} \TT{<dennis@yurichev.com>}}
+\begin{titlepage}
+\begin{center}
+\vspace*{\fill}
+\LARGE \TITLE
 
-\date{\today}
-\maketitle
+\vspace*{\fill}
+
+\large \AUTHOR
+
+\large \TT{<\EMAIL>}
+\vspace*{\fill}
+\vfill
+
+\ccbyncnd
+
+\copyright 2013, \AUTHOR. 
+
+\IFRU{Это произведение доступно по лицензии Creative Commons «Attribution-NonCommercial-NoDerivs» 
+(«Атрибуция — Некоммерческое использование — Без производных произведений») 3.0 Непортированная. 
+Чтобы увидеть копию этой лицензии, посетите}
+{This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported License. 
+To view a copy of this license, visit} \url{http://creativecommons.org/licenses/by-nc-nd/3.0/}.
+
+\IFRU{Версия этого текста}{Text version} 0.1 ({\large \today}).   
+\end{center}
+\end{titlepage}
 
 \tableofcontents
 \cleardoublepage
