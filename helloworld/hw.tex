@@ -154,24 +154,34 @@ var_10          = dword ptr -10h
 main            endp
 \end{lstlisting}
 
-\IFRU{Почти то же самое, за исключением того что в прологе функции мы видим \TT{AND ESP, 0FFFFFFF0h} ~--- эта инструкция выравнивает значение в \ESP по 16-байтной границе, делая некоторые значения 
-в стеке также выровненными по этой границе.}
+\IFRU{Почти то же самое, за исключением того что в прологе функции мы видим \TT{AND ESP, 0FFFFFFF0h} ~--- 
+эта инструкция выравнивает значение в \ESP по 16-байтной границе, делая некоторые значения 
+в стеке также выровненными по этой границе (процессор более эффективно работает с переменными расположенными
+в памяти по адресам кратным 4 или 16)\footnote{\URLWPDA}.}
 {Almost the same, only sole exception that in function prologue we see \TT{AND ESP, 0FFFFFFF0h} ~--- 
-this instruction aligning \ESP value on 16-byte border, resulting some values in stack aligned too.}
+this instruction aligning \ESP value on 16-byte border, resulting some values in stack aligned too
+(CPU performing better if values it working with are located in memory at addresses aligned by 
+4 or 16 byte border)\URLWPDA.}
 
-\TT{SUB ESP, 10h} \IFRU{выделяет в стеке 16 байт, хотя, как будет видно далее, нам достаточно только 4.}{allocate 16 bytes in stack, although, as we could see below, we need only 4.} 
+\TT{SUB ESP, 10h} \IFRU{выделяет в стеке 16 байт, хотя, как будет видно далее, нам достаточно только 4.}
+{allocate 16 bytes in stack, although, as we could see below, we need only 4.} 
 
-\IFRU{Это происходит потому что количество выделяемого места в локальном стеке тоже выровнено по 16-байтной границе.}{This is because the size of allocated stack is also aligned on 16-byte border.}
+\IFRU{Это происходит потому что количество выделяемого места в локальном стеке тоже выровнено по 
+16-байтной границе.}{This is because the size of allocated stack is also aligned on 16-byte border.}
 
 \IFRU{Адрес строки (или указатель на строку) затем записывается прямо в стек без помощи инструкции \PUSH.}
 {String address (or pointer to string) is then writing directly into stack space without \PUSH instruction use.}
 
 \IFRU{Затем вызывается \printf.}{Then \printf function is called.}
 
-\IFRU{В отличие от MSVC, GCC в компиляции без включенной оптимизации генерирует \TT{MOV EAX, 0} вместо более короткого опкода.}{Unlike MSVC, GCC while compiling without optimization turned on, emitting \TT{MOV EAX, 0} instead of shorter opcode.}
+\IFRU{В отличие от MSVC, GCC в компиляции без включенной оптимизации генерирует \TT{MOV EAX, 0} вместо 
+более короткого опкода.}{Unlike MSVC, GCC while compiling without optimization turned on, 
+emitting \TT{MOV EAX, 0} instead of shorter opcode.}
 
-\IFRU{Последняя инструкция \LEAVE ~--- это аналог команд \TT{MOV ESP, EBP} и \TT{POP EBP} ~--- то есть возврат указателя стека и регистра \EBP в первоначальное состояние.} 
-{The last instruction \LEAVE ~--- is \TT{MOV ESP, EBP} and \TT{POP EBP} instructions pair equivalent ~--- in other words, this instruction setting back stack pointer (\ESP) and \EBP register to its initial state.} 
+\IFRU{Последняя инструкция \LEAVE ~--- это аналог команд \TT{MOV ESP, EBP} и \TT{POP EBP} ~--- 
+то есть возврат указателя стека и регистра \EBP в первоначальное состояние.} 
+{The last instruction \LEAVE ~--- is \TT{MOV ESP, EBP} and \TT{POP EBP} instructions pair equivalent ~--- 
+in other words, this instruction setting back stack pointer (\ESP) and \EBP register to its initial state.} 
 
 \IFRU{Это необходимо, т.к., в начале функции мы модифицировали регистры \ESP и \EBP (при помощи}
 {This is necessary because we modified these register values (\ESP and \EBP) at the function start (executing}

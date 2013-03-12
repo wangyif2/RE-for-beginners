@@ -154,21 +154,19 @@ icl intel.cpp /QaxSSE2 /Faintel.asm /Ox
 \MOVDQU (\IT{Move Unaligned Double Quadword}) ~--- \IFRU{она просто загружает 16 байт из памяти в XMM-регистр}
 {it just load 16 bytes from memory into XMM-register}.
 
-\newcommand{\URLDSA}{\href{http://en.wikipedia.org/wiki/Data_structure_alignment}{Wikipedia: data structure alignment}}
-
 \PADDD (\IT{Add Packed Integers}) ~--- 
 \IFRU{складывает сразу 4 пары чисел и оставляет в первом операнде результат. 
 Кстати, если произойдет переполнение, то исключения не произойдет и никакие флаги не установятся, 
 запишутся просто младшие 32 бита результата. 
 Если один из операндов \PADDD ~--- адрес значения в памяти, 
 то требуется чтобы адрес был выровнен по 16-байтной границе. Если он не выровнен, произойдет исключение
-\footnote{О выравнивании данных см. также: \URLDSA}.}
+\footnote{О выравнивании данных см. также: \URLWPDA}.}
 {adding 4 pairs of numbers and leaving result in first operand.
 By the way, no exception raised in case of overflow and no flags will be set, just low 32-bit of result will
 be stored.
 If one of \PADDD operands ~--- address of value in memory,
 address should be aligned by 16-byte border. If it's not aligned, exception will be raised
-\footnote{More about data aligning: \URLDSA}.}
+\footnote{More about data aligning: \URLWPDA}.}
 
 \MOVDQA (\IT{Move Aligned Double Quadword}) ~--- \IFRU{тоже что и \MOVDQU, только подразумевает 
 что адрес в памяти выровнен по 16-байтной границе. 

@@ -175,6 +175,14 @@ need and set \ESP as a pointer to that \IT{allocated} block.}
 
 \lstinputlisting{stack/2_1.c}
 
+\IFRU{(Функция \_snprintf() работает так же как и \printf, только вместо выдачи результата в 
+stdout (т.е., на терминал или в консоль),
+записывает его в буфер \TT{buf}. \TT{puts()} выдает содержимое буфера \TT{buf} в stdout. Конечно, можно было бы
+заменить оба этих вызова на один \printf, но мне нужно проиллюстрировать использование небольшого буфера.)}
+{(\_snprintf() function works just like \printf, but instead dumping result into stdout (e.g., to terminal or 
+console), write it to \TT{buf} buffer. \TT{puts()} copies \TT{buf} contents to stdout. Of course, these two
+function calls might be replaced by one \printf call, but I would like to illustrate small buffer usage.)}
+
 \IFRU{Компилируем}{Let's compile} (MSVC 2010):
 
 \lstinputlisting{stack/2_2_msvc.asm}
