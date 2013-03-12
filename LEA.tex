@@ -1,0 +1,38 @@
+﻿% done
+
+\section{\IFRU{Инструкция LEA}{LEA instruction}}
+\label{sec:LEA}
+
+\newcommand{\URLAM}{\url{http://en.wikipedia.org/wiki/Addressing_mode}}
+
+\IFRU
+{\LEA (\IT{Load Effective Address}) это инструкция которая задумывалась вовсе не для складывания чисел, 
+а для формирования адреса например из указателя на массив и прибавления индекса к нему\footnote{См. также: \URLAM}.}
+{\LEA (\IT{Load Effective Address}) is instruction intended not for values summing but for address forming, 
+for example, for forming address of array element by adding array address, element index, with 
+multiplication of element size\footnote{See also: \URLAM}.}
+
+\IFRU{Важная особенность \LEA в том что производимые ею вычисления не модифицируют флаги.}
+{Important property of \LEA instruction is that it do not alter processor flags.}
+
+% TODO: дописать про x*n+m
+
+\begin{lstlisting}
+int f(int a, int b)
+{
+	return a*8+b;
+};
+\end{lstlisting}
+
+\IFRU{Компилируем в MSVC 2010 с \Ox:}{MSVC 2010 with \Ox option:}
+
+\begin{lstlisting}
+_a$ = 8							; size = 4
+_b$ = 12						; size = 4
+_f	PROC
+	mov	eax, DWORD PTR _b$[esp-4]
+	mov	ecx, DWORD PTR _a$[esp-4]
+	lea	eax, DWORD PTR [eax+ecx*8]
+	ret	0
+_f	ENDP
+\end{lstlisting}

@@ -1,0 +1,58 @@
+% done
+
+\subsection{\IFRU{Пример генератора случайных чисел}{Pseudo-random number generator example}}
+
+\IFRU{Если нам нужны случайные значения с плавающей запятой в интервале от 0 до 1, самое простое это взять
+генератор ПСЧ вроде Mersenne twister выдающий случайные 32-битные числа в виде DWORD, преобразовать
+это число в \Tfloat и затем разделить на \TT{RAND\_MAX} (\IT{0xffffffff} в данном случае) ~--- 
+полученное число будет в интервале от 0 до 1.}
+{If we need float random numbers from 0 to 1, the most simplest thing is to use random numbers generator like
+Mersenne twister producing random 32-bit values in DWORD form, transform this value to \Tfloat and then
+divide it by \TT{RAND\_MAX} (\IT{0xffffffff} in our case) ~--- value we got will be in 0..1 interval.}
+
+\IFRU{Но как известно, операция деления это медленная операция почти всегда. 
+Сможем ли мы избежать её, как в случае с делением через умножение?}
+{But as we know, division operation is almost always very slow.
+Will it be possible to get rid of it, as in case of division by multiplication?}
+~\ref{sec:divisionbynine}
+
+\IFRU{Вспомним состав числа с плавающей запятой: это бит знака, биты мантиссы и биты экпоненты. 
+Для получения случайного числа, нам нужно просто заполнить случайными битами все биты мантиссы!}
+{Let's remember what float number consisted of: sign bit, significand bits and exponent bits.
+We need just to store random bits to significand bits for getting float number!}
+
+\IFRU{Экспонента не может быть нулевой (иначе число будет денормализованным), 
+так что в эти биты мы запишем \IT{01111111} ~--- 
+это будет означать что экспонента равна единице. Далее заполняем мантиссу случайными битами, 
+знак оставляем в виде 0 (что значит наше число положительное), и вуаля. 
+Генерируемые числа будут в интервале от 1 до 2, так что нам еще нужно будет отнять единицу.}
+{Exponent cannot be zero (number will be denormalized in this case), so we will store \IT{01111111} 
+to exponent ~--- this mean exponent will be 1. Then fill significand with random bits, set sign bit to
+0 (which mean positive number) and voilà.
+Generated numbers will be in 1 to 2 interval, so we also should subtract 1 from it.}
+
+\newcommand{\URLXOR}{\url{http://xor0110.wordpress.com/2010/09/24/how-to-generate-floating-point-random-numbers-efficiently}}
+
+\IFRU{В моем примере\footnote{идея взята здесь: \URLXOR} 
+применяется очень простой линейный конгруэнтный генератор случайных чисел, выдающий 32-битные числа.
+Генератор инициализируется текущим временем в стиле UNIX.}
+{Very simple linear congruential random numbers generator is used in my 
+example\footnote{idea was taken from: \URLXOR}, producing 32-bit numbers. 
+The PRNG initializing by current time in UNIX-style.}
+
+\IFRU{Далее, тип \Tfloat представляется в виде \IT{union} ~--- это конструкция \CCpp позволяющая 
+интерпретировать часть памти по-разному. В нашем случае, мы можем создать переменную типа \TT{union} 
+и затем обращаться к ней как к \Tfloat или как к \IT{uint32\_t}. Можно сказать что это хак, причем грязный.}
+{Then, \Tfloat type represented as \IT{union} ~--- that is the \CCpp construction allowing us
+to interpret piece of memory differently typed. In our case, we are able to create a variable
+of \TT{union} type and then access to it as it's \Tfloat or as it's \IT{uint32\_t}. 
+It can be said, it's just a hack. A dirty one.}
+
+\lstinputlisting{unions/FPU_PRNG.cpp}
+
+MSVC 2010 (\Ox): 
+
+\lstinputlisting{\IFRU{unions/FPU_PRNG_msvc_2010_Ox_ru.asm}{unions/FPU_PRNG_msvc_2010_Ox_en.asm}}
+
+\IFRU{А результат GCC будет почти таким же.}{GCC producing very same code.}
+

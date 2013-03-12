@@ -1,0 +1,374 @@
+﻿% done
+
+\section{scanf()}
+
+\IFRU{Теперь попробуем использовать scanf().}{Now let's use scanf().}
+
+\begin{lstlisting}
+int main() 
+{
+	int x;
+	printf ("Enter X:\n");
+
+	scanf ("%d", &x);
+
+	printf ("You entered %d...\n", x);
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU
+{Да, согласен, использовать \scanf в наши времена для того чтобы спросить у юзера что-то: не самая хорошая идея.
+Но я хотел проиллюстрировать передачу указателя на \Tint.}
+{OK, I agree, it is not clever to use \scanf today. But I wanted to illustrate passing pointer to \Tint.}
+
+\IFRU{Что получаем на ассемблере компилируя MSVC 2010:}
+{What we got after compiling in MSVC 2010:}
+
+\lstinputlisting{scanf/4_1_msvc.asm}
+
+\IFRU{Переменная \TT{x} является локальной.}{Variable \TT{x} is local.} 
+
+\IFRU{По стандарту \CCpp она доступна только из этой же функции и ни откуда более. 
+Так получилось, что локальные переменные располагаются в стеке. 
+Может быть, можно было бы использовать и другие варианты, но в x86 это традиционно так.}
+{\CCpp standard tell us it must be visible only in this function and not from any other place. 
+Traditionally, local variables are placed in the stack. 
+Probably, there could be other ways, but in x86 it is so.}
+
+\IFRU{Следующая после пролога инструкция \TT{PUSH ECX} не ставит своей целью сохранить 
+значение регистра \ECX. 
+(Заметьте отсутствие сооветствующей инструкции \TT{POP ECX} в конце функции)}
+{Next after function prologue instruction \TT{PUSH ECX} is not for saving \ECX state 
+(notice absence of corresponding \TT{POP ECX} at the function end).}
+
+\IFRU{Она на самом деле выделяет в стеке 4 байта для хранения \TT{x} в будущем.} 
+{In fact, this instruction just allocate 4 bytes in stack for \TT{x} variable storage.} 
+
+\IFRU{Доступ к \TT{x} будет осуществляться при помощи объявленного макроса \TT{\_x\$} 
+(он равен -4) и регистра \EBP указывающего на текущий фрейм.}
+{\TT{x} will be accessed with the assistance of \TT{\_x\$} macro 
+(it equals to -4) and \EBP register pointing to current frame.}
+
+\IFRU{Вообще, во все время исполнения функции, \EBP указывает на текущий фрейм и через \TT{EBP+смещение}
+можно иметь доступ как к локальным переменным функции, так и аргументам функции.} 
+{Over a span of function execution, \EBP is pointing to current stack frame and it is possible 
+to have an access to local variables and function arguments via \TT{EBP+offset}.}
+
+\IFRU
+{Можно было бы использовать \ESP, но он во время исполнения функции постоянно меняется.}
+{It is also possible to use \ESP, but it's often changing and not very handy.}
+
+\IFRU
+{У функции \scanf в нашем примере два аргумента.}{Function \scanf in our example has two arguments.}
+
+\IFRU
+{Первый ~--- указатель на строку содержащую \TT{"\%d"} и второй ~--- адрес переменной \TT{x}.} 
+{First is pointer to the string containing \TT{"\%d"} and second ~--- address of variable \TT{x}.} 
+
+\IFRU{Вначале адрес \TT{x} помещается в регистр \EAX при помощи инструкции \TT{lea eax, DWORD PTR \_x\$[ebp]}. 
+{First of all, address of \TT{x} is placed into \EAX register by \TT{lea eax, DWORD PTR \_x\$[ebp]} instruction}
+
+\IFRU{Инструкция \LEA означает \IT{load effective address}, но со временем она изменила свою функцию}
+{\LEA meaning \IT{load effective address}, but over a time it changed its primary application}
+~\ref{sec:LEA}.
+
+\IFRU{Можно сказать что в данном случае \LEA просто помещает в \EAX результат суммы значения в регистре 
+\EBP и макроса \TT{\_x\$}.}
+{It can be said, \LEA here just placing to \EAX sum of \EBP value and \TT{\_x\$} macro.}
+
+\IFRU{Это тоже что и}{It is the same as} \TT{lea eax, [ebp-4]}.
+
+\IFRU{Итак, от значения \EBP отнимается 4 и помещается в \EAX.
+Далее значение \EAX заталкивается в стек и вызывается \scanf.}
+{So, 4 subtracting from \EBP value and result is placed to \EAX. 
+And then value in \EAX is pushing into stack and \scanf is called.}
+
+\IFRU{После этого вызывается \printf. Первый аргумент вызова которого, строка:} 
+{After that, \printf is called. First argument is pointer to string: }
+\TT{"You entered \%d...\textbackslash{}n"}.}
+
+\IFRU{Второй аргумент: \TT{mov ecx, [ebp-4]}, эта инструкция кладет в \ECX не адрес переменной \TT{x}, 
+а его значение, что там сейчас находится.}
+{Second argument is prepared as: \TT{mov ecx, [ebp-4]},
+this instruction placing to \ECX not address of \TT(x) variable but its contents.}
+
+\IFRU{Далее значение \ECX заталкивается в стек и вызывается последний \printf.}
+{After, \ECX value is placing into stack and last \printf called.}
+
+\IFRU{Попробуем тоже самое скомпилировать в Linux при помощи GCC 4.4.1:}
+{Let's try to compile this code in GCC 4.4.1 under Linux:}
+
+\lstinputlisting{scanf/4_1_gcc.asm}
+
+\label{puts}
+\IFRU{GCC заменил первый вызов \printf на \TT{puts()}. 
+Действительно, \printf с одним агрументом это почти аналог \TT{puts()}.}
+{GCC replaced first \printf call to \TT{puts()}. 
+Indeed: \printf with only sole argument is almost analogous to \TT{puts()}.} 
+
+\IFRU
+{\IT{Почти}, если принять условие что в строке не будет управляющих символов \printf 
+начинающихся со знака процента. Тогда эффект от работы этих двух функций будет разным.}
+{\IT{Almost}, because we need to be sure that this string will not contain printf-control 
+statements starting with \IT{\%}: then effect of these two functions will be different.}
+
+\IFRU{Why GCC replaced \printf to \TT{puts}? Because \TT(puts()) work faster}
+{Зачем GCC заменил один вызов на другой? Потому что \TT{puts()} работает быстрее}
+\footnote{\url{http://www.ciselant.de/projects/gcc_printf/gcc_printf.html}}. 
+
+\IFRU
+{Видимо потому, что просто проталкивает символы в stdout не сравнивая каждый со знаком процента.}
+{It working faster because just passes characters to stdout not comparing each with \IT{\%} symbol.}
+
+\IFRU
+{Почему \scanf переименовали в \TT{\_\_\_isoc99\_scanf}, я честно говоря, пока не знаю.}
+{Why \scanf is renamed to \TT{\_\_\_isoc99\_scanf}, I do not know yet.}
+
+\IFRU{Далее все как и прежде ~--- параметры заталкиваются через стек при помощи \MOV.}
+{As before ~--- arguments are placed into stack by \MOV instruction.}
+
+\subsection{\IFRU{Глобальные переменные}{Global variables}}
+
+\IFRU
+{А что если переменная \TT{x} из предыдущего примера будет глобальной переменной а не локальной? 
+Ну, тогда к ней смогут обращаться из любого другого места, а не только из тела функции. 
+Это снова не очень хорошая практика программирования, но ради примера мы можем себе это позволить.}
+{What if \TT{x} variable from previous example will not local but global variable? 
+Then it will be accessible from any place but not only from function body. 
+It is not very good programming practice, but for the sake of experiment we could do this.}
+
+\lstinputlisting{scanf/4_2_msvc.asm}
+
+\IFRU
+{Ничего особенного, в целом. Теперь \TT{x} объявлена в сегменте \TT{\_DATA}. 
+Память для нее в стеке более не выделяется. Все обращения к ней происходит не через стек, а уже напрямую. 
+Её значение неопределено. 
+Это означает, что память под нее будет выделена, но ни компилятор, ни ОС не будет заботиться о том, 
+что там будет лежать на момент старта функции \TT{\_main}.
+В качестве домашнего задания, попробуйте объявить большой неопределенный массив и посмотреть 
+что там будет лежать после загрузки.}
+{Now \TT{x} variable is defined in \TT{\_DATA} segment. 
+Memory in local stack is not allocated anymore. 
+All accesses to it are not via stack but directly to process memory. 
+Its value is not defined. 
+This mean that memory will be allocated by operation system, but not compiler, 
+neither operation system will not take care about its initial value at the moment of 
+\main function start.
+As experiment, try to declare large array and see what will it contain after 
+program loading.}
+
+\IFRU{Попробуем изменить объявление этой переменной:}{Now let's assign value to variable explicitly:}
+
+\begin{lstlisting}
+int x=10; // default value
+\end{lstlisting}
+
+\IFRU{Выйдет в итоге:}{We got:}
+
+\begin{lstlisting}
+_DATA	SEGMENT
+_x	DD	0aH
+
+...
+\end{lstlisting}
+
+\IFRU{Здесь уже по месту этой переменной записано \TT{0xA} с типом DD (dword = 32 бита).}
+{Here we see value 0xA typed as DWORD (DD meaning DWORD = 32 bit).}
+
+\IFRU{Если вы откроете скомпилированный .exe-файл в \IDA, то увидите что \IT{x} 
+находится аккурат в начале сегмента \TT{\_DATA}, после этой переменной будут текстовые строки.}
+{If you will open compiled .exe in \IDA, you will see \IT{x} placed at the beginning of 
+\TT{\_DATA} segment, and after you'll see text strings.}
+
+\IFRU{А вот если вы откроете в \IDA, .exe скомплированный в прошлом примере, 
+где значение \IT{x} неопределено, то в IDA вы увидите:}
+{If you will open compiled .exe in \IDA from previous example where \IT{x} value is not defined, 
+you'll see something like this:}
+
+\begin{lstlisting}
+.data:0040FA80 _x              dd ?                    ; DATA XREF: _main+10
+.data:0040FA80                                         ; _main+22
+.data:0040FA84 dword_40FA84    dd ?                    ; DATA XREF: _memset+1E
+.data:0040FA84                                         ; unknown_libname_1+28
+.data:0040FA88 dword_40FA88    dd ?                    ; DATA XREF: ___sbh_find_block+5
+.data:0040FA88                                         ; ___sbh_free_block+2BC
+.data:0040FA8C ; LPVOID lpMem
+.data:0040FA8C lpMem           dd ?                    ; DATA XREF: ___sbh_find_block+B
+.data:0040FA8C                                         ; ___sbh_free_block+2CA
+.data:0040FA90 dword_40FA90    dd ?                    ; DATA XREF: _V6_HeapAlloc+13
+.data:0040FA90                                         ; __calloc_impl+72
+.data:0040FA94 dword_40FA94    dd ?                    ; DATA XREF: ___sbh_free_block+2FE
+\end{lstlisting}
+
+\IFRU{\TT{\_x} обозначен как \TT{?}, наряду с другими переменными не требующими инициализции. 
+Это означает, что при загрузке .exe в память, место под все это выделено будет. 
+Но в самом .exe ничего этого нет. Неинициализированные переменные не занимают места в исполняемых файлах. Удобно для больших массивов, например.}
+{\TT{\_x} marked as \TT{?} among another variables not required to be initialized. 
+This mean that after loading .exe to memory, place for all these variables will be 
+allocated and some random garbage will be here. 
+But in .exe file these not initialized variables are not occupy anything. 
+It is suitable for large arrays, for example.}
+
+\IFRU{В Linux все также почти. За исключением того что если значение \TT{x} не определено, 
+то эта переменная будет находится в сегменте \TT{\_bss}. В ELF\footnote{Формат исполняемых файлов, использующийся в Linux и некоторых других *NIX} этот сегмент имеет такие аттрибуты:}
+{It is almost the same in Linux, except segment names and properties: 
+not initialized variables are located in \TT{\_bss} segment. 
+In ELF\footnote{Executable file format widely used in *NIX system including Linux} 
+file format this segment has such attributes:}
+
+\begin{lstlisting}
+; Segment type: Uninitialized
+; Segment permissions: Read/Write
+\end{lstlisting}
+
+\IFRU{Ну а если сделать присвоение этой переменной значения 10, то она будет находится в сегменте \TT{\_data},
+это сегмент с такими аттрибутами:}
+{If to assign some value to variable, it will be placed in \TT{\_data} segment, 
+this is segment with such attributes:}
+
+\begin{lstlisting}
+; Segment type: Pure data
+; Segment permissions: Read/Write
+\end{lstlisting}
+
+\subsection{\IFRU{Проверка результата scanf()}{scanf() result checking}}
+
+\IFRU
+{Как я уже говорил, использовать \scanf в наше время это слегка старомодно. 
+Но если уж жизнь заставила этим заниматься, нужно хотя бы проверять, сработал ли \scanf 
+правильно или пользователь ввел вместо числа что-то другое, что \scanf не смог трактовать как число.}
+{As I said before, it is not very clever to use \scanf today. 
+But if we have to, we need at least check if \scanf finished correctly without error.}
+
+\begin{lstlisting}
+int main() 
+{
+	int x;
+	printf ("Enter X:\n");
+
+	if (scanf ("%d", &x)==1)
+		printf ("You entered %d...\n", x);
+	else
+		printf ("What you entered? Huh?\n");
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{По стандарту, }{By standard, } \scanf\footnote{\href{http://msdn.microsoft.com/en-us/library/9y6s16x1(VS.71).aspx}{MSDN: scanf, wscanf}} \IFRU{возвращает количество успешно полученных значений.}{function returning number of fields it successfully read.}
+
+\IFRU{В нашем случае, если все успешно и пользователь ввел таки некое число, \scanf вернет 1. 
+А если нет, то 0 или EOF.} 
+{In our case, if everything went fine and user entered some number, 
+\scanf will return 1 or 0 or EOF in case of error.}
+
+\IFRU{Мы добавили код, который проверяет результат \scanf и в случае ошибки, говорит пользователю что-то другое.}
+{We added C code for \scanf result checking and printing error message in case of error.}
+
+\IFRU{Вот, что выходит на ассемблере}{What we got in assembler} (MSVC 2010):
+
+\begin{lstlisting}
+; Line 8
+	lea	eax, DWORD PTR _x$[ebp]
+	push	eax
+	push	OFFSET $SG3833 ; '%d', 00H
+	call	_scanf
+	add	esp, 8
+	cmp	eax, 1
+	jne	SHORT $LN2@main
+; Line 9
+	mov	ecx, DWORD PTR _x$[ebp]
+	push	ecx
+	push	OFFSET $SG3834 ; 'You entered %d...', 0aH, 00H
+	call	_printf
+	add	esp, 8
+; Line 10
+	jmp	SHORT $LN1@main
+$LN2@main:
+; Line 11
+	push	OFFSET $SG3836 ; 'What you entered? Huh?', 0aH, 00H
+	call	_printf
+	add	esp, 4
+$LN1@main:
+; Line 13
+	xor	eax, eax
+\end{lstlisting}
+
+\IFRU{Для того чтобы вызывающая функция имела доступ к результату вызываемой функции, 
+вызываемая функция (в нашем случае \scanf) оставляет это значение в регистре \EAX.}
+{Caller function (\main) must have access to result of callee function (\scanf), 
+so callee leave this value in \EAX register.}
+
+\IFRU{Мы проверяем его инструкцией \TT{CMP EAX, 1} (\IT{CoMPare}), то есть, 
+сравниваем значение в \EAX с 1.}
+{After, we check it using instruction \TT{CMP EAX, 1} (\IT{CoMPare}), 
+in other words, we compare value in \EAX with 1.} 
+
+\IFRU{Следующий за инструкцией \CMP: условный переход \JNE. 
+Это означает \IT{Jump if Not Equal}, то есть, условный переход \IT{если не равно}.}
+{\JNE conditional jump follows \CMP instruction. \JNE mean \IT{Jump if Not Equal}.}
+
+\IFRU{Итак, если \EAX не равен 1, то \JNE заставит перейти процессор 
+по адресу указанном в операнде \JNE, у нас это \TT{\$LN2@main}.}
+{So, if \EAX value not equals to 1, then the processor will pass execution to the 
+address mentioned in operand of \JNE, in our case it is \TT{\$LN2@main}.}
+\IFRU
+{Передав управление по этому адресу, процессор как раз начнет исполнять вызов \printf с 
+аргументом \TT{"What you entered? Huh?"}.}
+{Passing control to this address, microprocesor will execute function \printf 
+with argument \TT{"What you entered? Huh?"}.}
+\IFRU
+{Но если все нормально, перехода не случится, и исполнится другой \printf с двумя аргументами: 
+\TT{'You entered \%d...'} и значением переменной \TT{x}.}
+{But if everything is fine, conditional jump will not be taken, and another \printf call 
+will be executed, with two arguments: \TT{'You entered \%d...'} and value of variable \TT{x}. }
+
+\IFRU
+{А для того чтобы после этого вызова не исполнился сразу второй вызов \printf, 
+после него имеется инструкция \JMP, безусловный переход, он отправит процессор на место аккурат 
+после второго \printf и перед инструкцией \TT{XOR EAX, EAX}, которая собственно \TT{return 0}.}
+{Because second subsequent \printf not needed to be executed, there are \JMP after (unconditional jump) 
+it will pass control to the place after second \printf and before \TT{XOR EAX, EAX} instruction, 
+which implement \TT{return 0}.}
+
+\IFRU{Итак, можно сказать, что в подавляющем случае сравнение какой либо переменной с чем-то другим 
+происходит при помощи пары инструкций \CMP и \Jcc, где \IT{cc} это \IT{condition code}.}
+{So, it can be said that most often, comparing some value with another is implemented 
+by \CMP/\Jcc instructions pair, where \IT{cc} is \IT{condition code}.}
+\IFRU{\CMP сравнивает два значения и выставляет 
+флаги процессора\footnote{См.также о флагах x86-процессора: \url{http://en.wikipedia.org/wiki/FLAGS_register_(computing)}.}.}
+{\CMP comparing two values and set 
+processor flags\footnote{About x86 flags, see also: \url{http://en.wikipedia.org/wiki/FLAGS_register_(computing)}.}.}
+\IFRU
+{\Jcc проверяет нужные ему флаги и выполняет переход по указанному адресу (или не выполняет).}
+{\Jcc check flags needed to be checked and pass control to mentioned address (or not pass).}
+
+\label{CMPandSUB}
+\IFRU{Но на самом деле, как это не парадоксально поначалу звучит, \CMP это почти то же самое что и 
+инструкция \SUB, которая отнимает числа одно от другого.}
+{But in fact, this could be perceived paradoxial, but CMP instruction is in fact SUB (subtract).}
+\IFRU{Все арифметические инструкции также выставляют флаги в соответствии с результатом, не только \CMP.}
+{All arithmetic instructions set processor flags too, not only \CMP.}
+\IFRU{Если мы сравним 1 и 1, от еденицы отнимется единица, получится ноль, и выставится флаг 
+\ZF (\IT{zero flag}), означающий что последний полученный результат является нулем.}
+{If we compare 1 and 1, 1-1 will result zero, \ZF flag will be set (meaning that last result was zero).}
+\IFRU{Ни при каких других значениях \EAX, флаг \ZF выставлен не будет, кроме тех, когда операнды равны друг другу.}
+{There are no any other circumstances when it's possible except when operands are equal.}
+\IFRU{Инструкция \JNE проверяет только флаг \ZF, и совершает переход только если флаг не поднят. 
+Фактически, \JNE это синоним инструкции \JNZ (\IT{Jump if Not Zero}).}
+{\JNE checks only \ZF flag and jumping only if it is not set. 
+\JNE is in fact a synonym of \JNZ (\IT{Jump if Not Zero}) instruction.}
+\IFRU{Ассемблер транслирует обе инструкции в один и тот же опкод.}
+{Assembler translating both \JNE and \JNZ instructions into one single opcode.}
+\IFRU
+{Таким образом, можно \CMP заменить на \SUB и все будет работать также, но разница в том что \SUB 
+все-таки испортит значение в первом операнде. \CMP это \IT{SUB без сохранения результата}.}
+{So, \CMP can be replaced to \SUB and almost everything will be fine, but the difference is in 
+that \SUB alter value at first operand. \CMP is \IT{"SUB without saving result"}.}
+
+\IFRU
+{Код созданный при помощи GCC 4.4.1 в Linux практически такой же, если не считать мелких отличий, 
+которые мы уже рассмотрели раннее.}
+{Code generated by GCC 4.4.1 in Linux is almost the same, except differences we already considered.}

@@ -1,0 +1,462 @@
+% done
+
+\section{SIMD}
+
+SIMD \IFRU{это акроним:}{is just acronym:} \IT{Single Instruction, Multiple Data}.
+
+\IFRU{Как можно судить по названию, это обработка множества данных исполняя только одну инструкцию.}
+{As it's said, it's multiple data processing using only one instruction.}
+
+\IFRU{Как и FPU, эта подсистема процессора выглядит также отдельным процессором внутри x86.}
+{Just as FPU, that CPU subsystem looks like separate processor inside x86.}
+
+\IFRU{SIMD в x86 начался с MMX. Появилось 8 64-битных регистров MM0-MM7.}
+{SIMD began as MMX in x86. 8 new 64-bit registers appeared: MM0-MM7.}
+
+\IFRU{Каждый MMX-регистр может содержать 2 32-битных значения, 4 16-битных или же 8 байт. 
+Например, складывая значения двух MMX-регистров, можно складывать одновременно 8 8-битных значений.}
+{Each MMX register may hold 2 32-bit values, 4 16-bit values or 8 bytes.
+For example, it is possible to add 8 8-bit values (bytes) simultaneously by adding two values in MMX-registers.}
+
+\IFRU{Простой пример, это некий графический редактор, который хранит открытое изображение как двумерный массив. 
+Когда пользователь меняет яркость изображения, редактору нужно, например, прибавить некий коэффициент 
+ко всем пикселям, или отнять. 
+Для простоты можно представить, что изображение у нас бело-серо-черное и каждый пиксель занимает один байт, 
+то с помощью MMX можно менять яркость сразу у восьми пикселей.}
+{One simple example is graphics editor, representing image as a two dimensional array.
+When user change image brightness, the editor should add some coefficient to each pixel value, or to subtract.
+For the sake of brevity, our image may be grayscale and each pixel defined by one 8-bit byte, then it's possible
+to change brightness of 8 pixels simultaneously.}
+
+\IFRU{Когда MMX только появилось, эти регистры на самом деле распологались в FPU-регистрах. 
+Можно было использовать 
+либо FPU либо MMX в одно и то же время. Можно подумать что Intel решило немного сэкономить на транзисторах, 
+но на самом деле причина такого симбиоза проще ~--- более старая операционная система не знающая о дополнительных 
+регистрах процессора не будет сохранять их во время переключения задач, а вот регистры FPU сохранять будет. 
+Таким образом, процессор с MMX + старая операционная система + задача использующая MMX = все 
+это может работать вместе.}
+{When MMX appeared, these registers was actually located in FPU registers. 
+It was possible to use either FPU or MMX at the same time. One might think, Intel saved on transistors,
+but in fact, the reason of such symbiosis is simpler ~--- older operation system may not aware 
+of additional CPU registers wouldn't save them at the context switching, but will save FPU registers.
+Thus, MMX-enabled CPU + old operation system + process using MMX = that all will work together.}
+
+SSE ~--- \IFRU{это расширение регистров до 128 бит, теперь уже отдельно от FPU.}{is extension of SIMD registers up to 128 bits, now separately from FPU.}
+
+AVX ~--- \IFRU{расширение регистров до 256 бит.}{another extension to 256 bits.}
+
+\IFRU{Немного о практическом применении.}{Now about practical usage.}
+
+\IFRU{Конечно же, копирование блоков в памяти (\TT{memcpy}), сравнение (\TT{memcmp}), и подобное.}
+{Of course, memory copying (\TT{memcpy}), memory comparing (\TT{memcmp}) and so on.}
+
+\IFRU{Еще пример: имеется алгоритм шифрования DES, который берет 64-битный блок, 56-битный ключ, 
+шифрует блок с ключем и образуется 64-битный результат.
+Алгоритм DES можно легко представить в виде очень большой электронной цифровой схемы, 
+с проводами, элементами И, ИЛИ, НЕ.}
+{One more example: we got DES encryption algorithm, it takes 64-bit block, 56-bit key, encrypt block and produce 64-bit result.
+DES algorithm may be considered as a very large electronic circuit, with wires and AND/OR/NOT gates.}
+
+\label{bitslicedes}
+\newcommand{\URLBS}{\url{http://www.darkside.com.au/bitslice/}}
+
+\IFRU{Идея bitslice DES\footnote{\URLBS} ~--- это обработка сразу группы блоков и ключей одновременно. 
+Скажем, на x86 перменная типа \IT{unsigned int} вмещает в себе 32 бита, так что там можно хранить 
+промежуточные результаты сразу для 32-х блоков-ключей, используя 64+56 переменных типа \IT{unsigned int}.}
+{Bitslice DES\footnote{\URLBS} ~--- is an idea of processing group of blocks and keys simultaneously.
+Let's say, variable of type \IT{unsigned int} on x86 may hold up to 32 bits, so, it's possible to store there
+intermediate results for 32 blocks-keys pairs simultaneously, using 64+56 variables of \IT{unsigned int} type.}
+
+\IFRU{Я написал утилиту для перебора паролей/хешей Oracle RDBMS (которые основаны на алгоритме DES), 
+переделав алгоритм bitslice DES для SSE2 и AVX ~--- и теперь возможно шифровать одновременно 
+128 или 256 блоков-ключей:}
+{I wrote an utility to brute-force Oracle RDBMS passwords/hashes (ones based on DES),
+slightly modified bitslice DES algorithm for SSE2 and AVX ~--- now it's possible to encrypt 128 
+or 256 block-keys pairs simultaneously.}
+
+\url{http://conus.info/utils/ops_SIMD/}
+ 
+\subsection{\IFRU{Векторизация}{Vectorization}}
+
+\newcommand{\URLVEC}{\href{http://en.wikipedia.org/wiki/Vectorization_(computer_science)}{Wikipedia: vectorization}}
+
+\IFRU{Векторизация\footnote{\URLVEC} это когда у вас есть цикл, который берет на вход несколько массивов и выдает, 
+например, один массив данных. 
+Тело цикла берет некоторые элементы из входных массивов, что-то делает с ними и кладет в выходной. 
+Важно что операция применяемая ко всем элементам одна и та же. 
+Векторизация ~--- это обрабатывать несколько элементов одновременно.}
+{Vectorization\footnote{\URLVEC}, for example, is when you have a loop taking couple of arrays at input and producing one array.
+Loop body takes values from input arrays, do something and put result into output array.
+It's important that there is only one single operation applied to each element.
+Vectorization ~--- is to process several elements simultaneously.}
+
+/IFRU{Например:}{For example:}
+
+\begin{lstlisting}
+for (i = 0; i < 1024; i++)
+{
+    C[i] = A[i]*B[i];
+}
+\end{lstlisting}
+
+\IFRU{Этот кусок кода берет элементы из A и B, перемножает и сохраняет результат в C.}
+{This piece of code takes elements from A and B, multiplies them and save result into C.}
+
+\newcommand{\PMULLD}{\IT{PMULLD} (\IT{\IFRU{Multiply Packed Signed Dword Integers and Store Low Result}
+{Перемножить запакованные знаковые DWORD и сохранить младшую часть результата}})}
+\newcommand{\PMULHW}{\TT{PMULHW} (\IT{\IFRU{Multiply Packed Signed Integers and Store High Result}
+{Перемножить апакованные знаковые DWORD и сохранить старшую часть результата}})}
+
+\IFRU{Если представить что каждый элемент массива ~--- это 32-битный \Tint, то их можно загружать сразу 
+по 4 из А в 128-битный XMM-регистр, 
+из B в другой XMM-регистр и выполнив инстукцию \PMULLD и \PMULHW, можно получить 4 64-битных 
+произведения\footnote{результат умножения} сразу.}
+{If each array element we have is 32-bit \Tint, then it's possible to load 4 elements from A into 128-bit 
+XMM-register, from B to another XMM-registers, and by executing \PMULLD and \PMULHW, 
+it's possible to get 4 64-bit products\footnote{multiplication result} at once.}
+
+\IFRU{Таким образом, тело цикла исполняется 1024/4 раза вместо 1024, что в 4 раза меньше, и, конечно, быстрее.}
+{Thus, loop body count is 1024/4 instead of 1024, that's 4 times less and, of course, faster.}
+
+\newcommand{\URLINTELVEC}{\href{http://www.intel.com/intelpress/sum_vmmx.htm}{Excerpt: Effective Automatic Vectorization}}
+
+\IFRU{Некоторые компиляторы умеют делать автоматическую векторизацию в простых случаях, 
+например Intel C++\footnote{Еще о том как Intel C++ умеет автоматически векторизировать циклы: \URLINTELVEC}.}
+{Some compilers can do vectorization automatically in some simple cases, 
+for example, Intel C++\footnote{More about Intel C++ automatic vectorization: \URLINTELVEC}.}
+
+\IFRU{Я написал очень простую функцию:}{I wrote tiny function:}
+
+\begin{lstlisting}
+int f (int sz, int *ar1, int *ar2, int *ar3)
+{
+	for (int i=0; i<sz; i++)
+		ar3[i]=ar1[i]+ar2[i];
+
+	return 0;
+};
+\end{lstlisting}
+
+\subsubsection{Intel C++}
+
+\IFRU{Компилирую при помощи}{Let's compile it with} Intel C++ 11.1.051 win32:
+
+\begin{verbatim}
+icl intel.cpp /QaxSSE2 /Faintel.asm /Ox
+\end{verbatim}
+
+\IFRU{Имеем такое (в \IDA):}{We got (in \IDA):}
+
+\lstinputlisting{SIMD/18_1_en.asm}
+
+\IFRU{Инструкции имеющие отношение к SSE2 это:}{SSE2-related instructions are:}
+
+\MOVDQU (\IT{Move Unaligned Double Quadword}) ~--- \IFRU{она просто загружает 16 байт из памяти в XMM-регистр}
+{it just load 16 bytes from memory into XMM-register}.
+
+\newcommand{\URLDSA}{\href{http://en.wikipedia.org/wiki/Data_structure_alignment}{Wikipedia: data structure alignment}}
+
+\PADDD (\IT{Add Packed Integers}) ~--- 
+\IFRU{складывает сразу 4 пары чисел и оставляет в первом операнде результат. 
+Кстати, если произойдет переполнение, то исключения не произойдет и никакие флаги не установятся, 
+запишутся просто младшие 32 бита результата. 
+Если один из операндов \PADDD ~--- адрес значения в памяти, 
+то требуется чтобы адрес был выровнен по 16-байтной границе. Если он не выровнен, произойдет исключение
+\footnote{О выравнивании данных см. также: \URLDSA}.}
+{adding 4 pairs of numbers and leaving result in first operand.
+By the way, no exception raised in case of overflow and no flags will be set, just low 32-bit of result will
+be stored.
+If one of \PADDD operands ~--- address of value in memory,
+address should be aligned by 16-byte border. If it's not aligned, exception will be raised
+\footnote{More about data aligning: \URLDSA}.}
+
+\MOVDQA (\IT{Move Aligned Double Quadword}) ~--- \IFRU{тоже что и \MOVDQU, только подразумевает 
+что адрес в памяти выровнен по 16-байтной границе. 
+Если он не выровнен, произойдет исключение. 
+\MOVDQA работает быстрее чем \MOVDQU, но требует вышеозначенного.}
+{the same as \MOVDQU, but requires address of value in memory to be aligned by 16-bit border.
+If it's not aligned, exception will be raised.
+\MOVDQA works faster than \MOVDQU, but requires aforesaid.}
+
+\IFRU{Итак, эти SSE2-инструкции исполнятся только в том случае если еще осталось просуммировать 
+4 пары переменных типа \Tint плюс если указатель \TT{ar3} выровнен по 16-байтной границе.}
+{So, these SSE2-instructions will be executed only in case if there are more 4 pairs to work on
+plus pointer \TT{ar3} is aligned on 16-byte border.}
+
+\IFRU{Более того, если еще и \TT{ar2} выровнен по 16-байтной границе, то будет выполняться этот кусок:}
+{More than that, if \TT{ar2} is aligned on 16-byte border too, this piece of code will be executed:}
+
+\begin{lstlisting}
+                movdqu  xmm0, xmmword ptr [ebx+edi*4] ; ar1+i*4
+                paddd   xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4
+                movdqa  xmmword ptr [eax+edi*4], xmm0 ; ar3+i*4
+\end{lstlisting}
+
+\IFRU{А иначе, значение из \TT{ar2} загрузится в \XMMZERO используя инструкцию \MOVDQU, 
+которая не требует выровненного указателя, зато может работать чуть медленнее:}
+{Otherwise, value from \TT{ar2} will be loaded to \XMMZERO using \MOVDQU,
+it doesn't require aligned pointer, but may work slower:}
+
+\begin{lstlisting}
+                movdqu  xmm1, xmmword ptr [ebx+edi*4] ; ar1+i*4
+                movdqu  xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4 is not 16-byte aligned, so load it to xmm0
+                paddd   xmm1, xmm0
+                movdqa  xmmword ptr [eax+edi*4], xmm1 ; ar3+i*4
+\end{lstlisting}
+
+\IFRU{А во всех остальных случаях, будет исполняться код, который был бы как если бы не была 
+включена поддержка SSE2.}
+{In all other cases, non-SSE2 code will be executed.}
+
+\subsubsection{GCC}
+
+\newcommand{\URLGCCVEC}{\url{http://gcc.gnu.org/projects/tree-ssa/vectorization.html}}
+
+\IFRU{Но и GCC умеет кое-что векторизировать\footnote{Подробнее о векторизации в GCC: \URLGCCVEC}, 
+если компилировать с опциями \TT{-O3} и включить поддержку SSE2: \TT{-msse2}.}
+{GCC may also vectorize in some simple cases\footnote{More about GCC vectorization support: \URLGCCVEC},
+if to use \TT{-O3} option and to turn on SSE2 support: \TT{-msse2}.}
+
+\IFRU{Вот что вышло}{What we got} (GCC 4.4.1):
+
+\lstinputlisting{SIMD/18_2_gcc_O3.asm}
+
+\IFRU{Почти то же самое, хотя и не так дотошно как Intel C++.}
+{Almost the same, however, not as meticulously as Intel C++ doing it.}
+
+\subsection{\IFRU{Реализация \strlen() при помощи SIMD}{SIMD \strlen() implementation}}
+
+\newcommand{\URLMSDNSSE}{\href{http://msdn.microsoft.com/en-us/library/y0dh78ez(VS.80).aspx}{MSDN: MMX, SSE, and SSE2 Intrinsics}}
+
+\IFRU{Прежде всего, следует заметить, что SIMD-инструкции можно вставлять в \CCpp код при помощи специальных 
+макросов\footnote{\URLMSDNSSE}. В MSVC, часть находится в файле \TT{intrin.h}.}
+\IFRU{It should be noted that SIMD-instructions may be inserted into \CCpp code via 
+special macros\footnote{\URLMSDNSSE}.
+As of MSVC, some of them are located in \TT{intrin.h} file.}
+
+\IFRU{Имеется возможность реализовать функцию \strlen\footnote{strlen() ~--- стандартная функция Си 
+для подсчета длины строки} при помощи SIMD-инструкций, работающий в 2-2.5 раза быстрее обычной реализации. 
+Эта функция будет загружать в XMM-регистр сразу 16 байт и проверять каждый на ноль.}
+{It is possible to implement \strlen function\footnote{strlen() ~--- standard C library function for calculating
+string length} using SIMD-instructions, working 2-2.5 times faster than usual implementation.
+This function will load 16 characters into XMM-register and check each against zero.}
+
+\lstinputlisting{SIMD/18_3.c}
+
+\newcommand{\URLSTRLEN}{http://www.strchr.com/sse2\_optimised\_strlen}
+
+\IFRU{(пример базируется на исходнике \href{\URLSTRLEN}{отсюда}).}
+{(the example is based on source code from \href{\URLSTRLEN}{there}).}
+
+\IFRU{Компилируем в MSVC 2010 с опцией \Ox:}{Let's compile in MSVC 2010 with \Ox option:}
+
+\lstinputlisting{SIMD/18_4_msvc_Ox.asm}
+
+\IFRU{Итак, прежде всего, мы проверяем указатель \TT{str}, выровнен ли он по 16-байтной границе. 
+Если нет, то мы вызовем обычную реализацию \strlen.}
+{First of all, we check \TT{str} pointer, if it's aligned by 16-byte border.
+If not, let's call usual \strlen implementation.}
+
+\IFRU{Далее мы загружаем по 16 байт в регистр \XMMONE при помощи команды \MOVDQA.}
+{Then, load next 16 bytes into \XMMONE register using \MOVDQA instruction.}
+
+\IFRU{Наблюдательный читатель может спросить, почему в этом месте мы не можем использовать \MOVDQU, 
+которая может загружать откуда угодно не взирая на факт, выровнен ли указатель?}
+{Observant reader might ask, why \MOVDQU cannot be used here, because it can load data from the memory
+regardless the fact if the pointer aligned or not.}
+
+\IFRU{Да, можно было бы сделать вот как: если указатель выровнен, загружаем используя \MOVDQA, 
+иначе используем работающую чуть медленнее \MOVDQU.}
+{Yes, it might be done in this way: if pointer is aligned, load data using \MOVDQA,
+if not ~--- use slower \MOVDQU.}
+
+\IFRU{Однако здесь кроется не сразу заметная проблема, которая проявляется вот в чем:}
+{But here we are may stick into hard to notice problem:}
+
+\newcommand{\URLPAGE}{\url{http://en.wikipedia.org/wiki/Page_(computer_memory)}}
+
+\IFRU{В ОС линии Windows NT, и не только, память выделяется страницами по 4 KiB (4096 байт). 
+Каждый win32-процесс якобы имеет в наличии 4 GiB, но на самом деле, 
+только некоторые части этого адресного пространства присоеденены к реальной физической памяти. 
+Если процесс обратится к блоку памяти, которого не существует, сработает исключение. 
+Так работает виртуальная память\footnote{\URLPAGE}.}
+{In Windows NT line of operation systems, but not limited to it, memory allocated by pages of 4 KiB (4096 bytes).
+Each win32-process have ostensibly 4 GiB, but in fact, only some parts
+of address space are connected to real physical memory.
+If the process accessing to the absent memory block, exception will be raised.
+That's how virtual memory works\footnote{\URLPAGE}.}
+
+\IFRU{Так вот, функция, читающая сразу по 16 байт, имеет возможность нечаянно вылезти за границу 
+выделенного блока памяти. 
+Предположим, ОС выделила программе 8192 (0x2000) байт по адресу 0x008c0000. 
+Таким образом, блок занимает байты с адреса 0x008c0000 по 0x008c1fff включительно.}
+{So, some function loading 16 bytes at once, may step over a border of allocated memory block.
+Let's consider, OS allocated 8192 (0x2000) bytes at the address 0x008c0000.
+Thus, the block is the bytes starting from address 0x008c0000 to 0x008c1fff inclusive.}
+
+\IFRU{За этим блоком, то есть начиная с адреса 0x008c2000 нет вообще ничего, т.е., ОС не выделяла там память. 
+Обращение к памяти начиная с этого адреса вызовет исключение.}
+{After that block, that is, starting from address 0x008c2008 there are nothing at all, e.g., OS not allocated
+any memory there. Attempt to access a memory starting from that address will raise exception.}
+
+\IFRU{И предположим, что программа хранит некую строку из, скажем, пяти символов почти в самом конце блока, 
+что не является преступлением:}
+{And let's consider, the program holding some string containing 5 characters almost at the end of block,
+and that's not a crime.}
+
+\begin{center}
+  \begin{tabular}{ | l | l | }
+    \hline
+        0x008c1ff8 & 'h' \\
+        0x008c1ff9 & 'e' \\
+        0x008c1ffa & 'l' \\
+        0x008c1ffb & 'l' \\
+        0x008c1ffc & 'o' \\
+        0x008c1ffd & '\textbackslash{}x00' \\
+        0x008c1ffe & \IFRU{здесь случайный мусор}{random noise} \\
+        0x008c1fff & \IFRU{здесь случайный мусор}{random noise} \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\IFRU{В обычных условиях, программа вызвает \strlen передав ей указатель на строку \TT{'hello'} 
+лежащую по адресу 0x008c1ff8. 
+\strlen будет читать по одному байту до 0x008c1ffd, где ноль, и здесь она закончит работу.}
+{So, in usual conditions the program calling \strlen passing it a pointer to string \TT{'hello'} 
+lying in memory at address 0x008c1ff8.
+\strlen will read one byte at a time until 0x008c1ffd, where zero-byte, and so here it will stop working.}
+
+\IFRU{Теперь, если мы напишем свою реализацию \strlen читающую сразу по 16 байт, с любого адреса, 
+будь он выровнен по 16-байтной границе или нет, 
+\MOVDQU попытается загрузить 16 байт с адреса 0x008c1ff8 по 0x008c2008, и произойдет исключение. 
+Это ситуация которой, конечно, хочется избежать.}
+{Now if we implement own \strlen reading 16 byte at once, starting at any address, will it be alligned or not,
+\MOVDQU may attempt to load 16 bytes at once at address 0x008c1ff8 up to 0x008c2008, 
+and then exception will be raised.
+That's the situation to be avoided, of course.}
+
+\IFRU{Поэтому мы будем работать только с адресами выровненными по 16 байт, что в сочетании со знанием 
+что размер страницы также как правило выровнен по 16 байт, 
+даст некоторую гарантию что наша функция не будет пытаться читать из мест в невыделенной памяти.}
+{So then we'll work only with the addresses aligned by 16 byte border, what in combination with a knowledge
+of operation system page size is usually aligned by 16 byte too, give us some warranty our function will not
+read from unallocated memory.}
+
+\IFRU{Вернемся к нашей функции}{Let's back to our function}.
+
+\verb|_mm_setzero_si128()| ~--- \IFRU{это макрос, генерирующий \TT{pxor xmm0, xmm0} ~--- инструкция просто обнуляет регистр \XMMZERO.}
+{is a macro generating \TT{pxor xmm0, xmm0} ~--- instruction just clear /XMMZERO register}
+
+\verb|_mm_load_si128()| ~--- \IFRU{это макрос для \MOVDQA, он просто загружает 16 байт по адресу из указателя в \XMMONE.}
+{is a macro for \MOVDQA, it just loading 16 bytes from the address in \XMMONE.}
+
+\verb|_mm_cmpeq_epi8()| ~--- \IFRU{это макрос для \PCMPEQB, это инструкция которая 
+побайтово сравнивает значения из двух XMM регистров.} 
+{is a macro for \PCMPEQB, is an instruction comparing two XMM-registers bytewise.}
+
+\IFRU{И если какой-то из байт равен другому, то в результирующем значении будет выставлено на месте этого 
+байта 0xff, либо 0, если байты не были равны.}
+{And if some byte was equals to other, there will be 0xff at this place in result or 0 if otherwise.}
+
+\IFRU{Например.}{For example.}
+
+\begin{verbatim}
+XMM1: 11223344556677880000000000000000
+XMM0: 11ab3444007877881111111111111111
+\end{verbatim}
+
+\IFRU{После исполнения \TT{pcmpeqb xmm1, xmm0}, регистр \XMMONE будет содержать:}
+{After \TT{pcmpeqb xmm1, xmm0} execution, \XMMONE register will contain:}
+
+\begin{verbatim}
+XMM1: ff0000ff0000ffff0000000000000000
+\end{verbatim}
+
+\IFRU{Эта инструкция в нашем случае, сравнивает каждый 16-байтный блок с блоком состоящим из 16-и нулевых байт, 
+выставленным в \XMMZERO при помощи \TT{pxor xmm0, xmm0}.}
+{In our case, this instruction comparing each 16-byte block with the block of 16 zero-bytes,
+was set in \XMMZERO by \TT{pxor xmm0, xmm0}.}
+
+\IFRU{Следующий макрос \TT{\_mm\_movemask\_epi8()} ~--- это инструкция \TT{PMOVMSKB}.}
+{The next macro is \TT{\_mm\_movemask\_epi8()} ~--- that is \TT{PMOVMSKB} instruction.}
+
+\IFRU{Она очень удобна как раз для использования в паре с \PCMPEQB.}
+{It is very useful if to use it with \PCMPEQB.}
+
+\TT{pmovmskb eax, xmm1}
+
+\IFRU{Эта инструкция выставит самый первый бит \EAX в еденицу, если старший бит первого байта в 
+регистре \XMMONE является единицей. 
+Иными словами, если первый байт в регистре \XMMONE является 0xff, то первый бит в \EAX будет также единицей, 
+иначе нулем.}
+{This instruction will set first \EAX bit into 1 if most significant bit of the first byte in \XMMONE is 1.
+In other words, if first byte of \XMMONE register is 0xff, first \EAX bit will be set to 1 too.}
+
+\IFRU{Если второй байт в регистре \XMMONE является 0xff, то второй бит в \EAX также будет единицей. 
+Иными словами, инструкция отвечает на вопрос, \IT{какие из байт в \XMMONE являются 0xff?}
+В результате приготовит 16 бит и запишет в \EAX. Остальные биты в \EAX обнулятся.}
+{If second byte in \XMMONE register is 0xff, then second \EAX bit will be set to 1 too.
+In other words, the instruction is answer to the question \IT{which bytes in \XMMONE are 0xff?}
+And will prepare 16 bits in \EAX. Other \EAX bits will be cleared.}
+
+\IFRU{Кстати, не забывайте также вот о какой особенности нашего алгоритма:}
+{By the way, do not forget about this feature of our algorithm:}
+
+\IFRU{На вход может прийти 16 байт вроде}{There might be 16 bytes on input like} \TT{hello\textbackslash{}x00garbage\textbackslash{}x00ab}
+
+\IFRU{Это строка \TT{'hello'}, после нее терминирующий ноль, затем немного мусора в памяти.}
+{It's a \TT{'hello'} string, terminating zero after and some random noise in memory.}
+
+\newcommand{\MSBFOOTNOTE}{\footnote{most significant bit}}
+\newcommand{\LSBFOOTNOTE}{\footnote{least significant bit}}
+
+\IFRU{Если мы загрузим эти 16 байт в \XMMONE и сравним с нулевым \XMMZERO, то в итоге получим такое 
+(я использую здесь порядок с MSB\MSBFOOTNOTE до LSB\LSBFOOTNOTE):}
+{If we load these 16 bytes into \XMMONE and compare them with zeroed \XMMZERO, we will get something like
+(I use here order from MSB\MSBFOOTNOTE to LSB\LSBFOOTNOTE):}
+
+\begin{verbatim}
+XMM1: 0000ff00000000000000ff0000000000
+\end{verbatim}
+
+\IFRU{Это означает что инструкция сравнения обнаружила два нулевых байта, что и не удивительно.}
+{This mean, the instruction found two zero bytes, and that's not surprising.}
+
+\IFRU{\TT{PMOVMSKB} в нашем случае подготовит \EAX вот так (в двоичном представлении):} 
+{\TT{PMOVMSKB} in our case will prepare \EAX like (in binary representation):} \IT{0010000000100000b}.
+
+\IFRU{Совершенно очевидно что далее наша функция должна учитывать только первый встретившийся ноль 
+и игнорировать все остальное.}
+{Obviously, our function should consider only first zero and ignore others.}
+
+\IFRU{Следующая инструкция}{The next instruction} ~--- \TT{BSF} (\IT{Bit Scan Forward}). 
+\IFRU{Это инструкция находит самый младший бит во втором операнде и записывает его позицию в первый операнд.}
+{This instruction find first bit set to 1 and stores its position into first operand.}
+
+\begin{verbatim}
+EAX=0010000000100000b
+\end{verbatim}
+
+
+\IFRU{После исполнения этой инструкции \TT{bsf eax, eax}, в \EAX будет 5, что означает, 
+что единица найдена в пятой позиции (считая с нуля).}
+{After \TT{bsf eax, eax} instruction execution, \EAX will contain 5, this mean, 
+1 found at 5th bit position (starting from zero).}
+
+\IFRU{Для использования этой инструкции, в MSVC также имеется макрос}
+{MSVC has a macro for this instruction:}\TT{\_BitScanForward}.
+
+\IFRU{А дальше все просто. Если нулевой байт найден, его позиция прибавляется к тому что 
+мы уже насчитали и возвращается результат.}
+{Now it's simple. If zero byte found, its position added to what we already counted and now we have 
+ready to return result.}
+
+\IFRU{Почти всё.}{Almost all.}
+
+\IFRU{Кстати, следует также отметить, что компилятор MSVC сгенерировал два тела цикла сразу, для оптимизации.}
+{By the way, it's also should be noted, MSVC compiler emitted two loop bodies side by side, for optimization.}
+
+\IFRU{Кстати, в SSE 4.2 (который появился в Intel Core i7) все эти манипуляции со строками могут быть еще проще:}
+{By the way, SSE 4.2 (appeared in Intel Core i7) offers more instructions where these string manipulations might be
+even easier:}\url{http://www.strchr.com/strcmp\_and\_strlen\_using\_sse\_4.2}
+

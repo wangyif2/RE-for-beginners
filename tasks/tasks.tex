@@ -1,0 +1,166 @@
+﻿% done
+
+\chapter{\IFRU{Задачи}{Tasks}}
+
+\IFRU{Почти для всех задач, если не указано иное, два вопроса:}
+{There are two questions almost for every task, if otherwise isn't specified:}
+
+1) \IFRU{Что делает эта функция? Ответ должен состоять из одной фразы.}
+{What this function does? Answer in one-sentence form.}
+
+2) \IFRU{Перепишите эту функцию на \CCpp}{Rewrite this function into \CCpp}.
+
+\IFRU{Подсказки и ответы собраны в приложении к этой брошюре.}{Hints and solutions are in the appendix of
+this brochure.}
+
+\section{\IFRU{Легкий уровень}{Easy level}}
+
+\subsection{\Task 1.1}
+
+\IFRU{Это стандартная функция из библиотек Си. Исходник взят из OpenWatcom. Скомпилировано в MSVC 2010.}
+{This is standard C library function. Source code taken from OpenWatcom. Compiled in MSVC 2010.}
+
+\lstinputlisting{tasks/tasks_1_1_msvc.asm}
+
+\IFRU{Это он же скомпилирован при помощи GCC 4.4.1 с опцией \TT{-O3} (максимальная оптимизация)}
+{It is the same code compiled by GCC 4.4.1 with \TT{-O3} option (maximum optimization)}:
+
+\lstinputlisting{tasks/tasks_1_1_gcc.asm}
+
+\subsection{\Task 1.2}
+
+\IFRU{Это также стандартная функция из библиотек Си. Исходник взят из OpenWatcom и немного переделан. 
+Скомпилировано в MSVC 2010 с флагом (\Ox).}
+{This is also standard C library function. Source code is taken from OpenWatcom and modified slightly.
+Compiled in MSVC 2010 with \Ox optimization flag.}
+
+\IFRU{Эта функция использует стандартные функции Си:}
+{This function also use these standard C functions:} isspace() \IFRU{и}{and} isdigit().
+
+\lstinputlisting{tasks/tasks_1_2_msvc.asm}
+
+\IFRU{То же скомпилировано в GCC 4.4.1. Задача немного усложняется тем, что GCC представил isspace() и isdigit() 
+как inline-функции и вставил их тела прямо в код.}
+{Same code compiled in GCC 4.4.1. This task is sligthly harder because GCC compiled isspace() and isdigit() 
+functions like inline-functions and inserted their bodies right into code.}
+
+\lstinputlisting{tasks/tasks_1_2_gcc.asm}
+
+\subsection{\Task 1.3}
+
+\IFRU{Это также стандартная функция из библиотек Си, а вернее, две функции, работающие в паре. 
+Исходник взят из MSVC 2010 и немного переделан.}
+{This is standard C function too, actually, two functions working in pair.
+Source code taken from MSVC 2010 and modified sligthly.}
+
+\IFRU{Суть переделки в том, что эта функция может корректно работать в мульти-тредовой среде, 
+а я, для упрощения (или запутывания) убрал поддержку этого.}
+{The matter of modification is that this function can work properly in multi-threaded environment,
+and I removed its support for simplification (or for confusion).}
+
+\IFRU{Скомпилировано в MSVC 2010 с флагом (\Ox)}{Compiled in MSVC 2010 with \Ox flag}.
+
+\lstinputlisting{tasks/tasks_1_3_msvc.asm}
+
+\IFRU{То же скомпилировано при помощи GCC 4.4.1}{Same code compiled in GCC 4.4.1}:
+
+\lstinputlisting{tasks/tasks_1_3_gcc.asm}
+
+\subsection{\Task 1.4}
+
+\IFRU{Это стандартная функция из библиотек Си. Исходник взят из MSVC 2010. Скомпилировано в MSVC 2010 с флагом \Ox.}
+{This is standard C library function. Source code taken from MSVC 2010. Compiled in MSVC 2010 with \Ox flag.}
+
+\lstinputlisting{tasks/tasks_1_4_msvc.asm}
+
+\IFRU{То же скомпилировано при помощи GCC 4.4.1}
+{Same code compiled in GCC 4.4.1}:
+
+\lstinputlisting{tasks/tasks_1_4_gcc.asm}
+
+\subsection{\Task 1.5}
+
+\IFRU{Задача, скорее, на эрудицию, нежели на чтение кода.}
+{This task is rather on knowledge than on reading code.}
+
+\IFRU{Функция взята из OpenWatcom. Скомпилировано в MSVC 2010 с флагом \Ox.}
+{The function is taken from OpenWatcom. Compiled in MSVC 2010 with \Ox flag.}
+
+\lstinputlisting{tasks/tasks_1_5_msvc.asm}
+
+\subsection{\Task 1.6}
+
+\IFRU{Скомпилировано в MSVC 2010 с ключом \Ox.}
+{Compiled in MSVC 2010 with \Ox option.}
+
+\lstinputlisting{tasks/tasks_1_6_msvc.asm}
+
+\subsection{\Task 1.7}
+
+\IFRU{Это взята функция из ядра Linux 2.6.}{This function is taken from Linux 2.6 kernel.}
+
+\IFRU{Скомпилировано в MSVC 2010 с опцией \Ox:}{Compiled in MSVC 2010 with \Ox option:}
+
+\lstinputlisting{tasks/tasks_1_7_msvc.asm}
+
+\subsection{\Task 1.8}
+
+\IFRU{Скомпилировано в MSVC 2010 с опцией \TT{/O1}\footnote{/O1: оптимизация по размеру кода}:}
+{Compiled in MSVC 2010 with \TT{/O1} option\footnote{/O1: minimize space}:}
+
+\lstinputlisting{tasks/tasks_1_8_msvc.asm}
+
+\subsection{\Task 1.9}
+
+\IFRU{Скомпилировано в MSVC 2010 с опцией \TT{/O1}:}
+{Compiled in MSVC 2010 with \TT{/O1} option:}
+
+\lstinputlisting{tasks/tasks_1_9_msvc.asm}
+
+\subsection{\Task 1.10}
+
+\IFRU{Если это скомпилировать и запустить, появится некоторое число. Откуда оно берется? 
+Откуда оно берется если скомпилировать в MSVC с оптимизациями (\Ox)?}
+{If to compile this piece of code and run, some number will be printed. Where it came from?
+Where it came from if to compile it in MSVC with optimization (\Ox)?}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int main()
+{
+	printf ("%d\n");
+
+	return 0;
+};
+\end{lstlisting}
+
+\section{\IFRU{Средний уровень}{Middle level}}
+
+\subsection{\Task 2.1}
+
+\IFRU{Довольно известный алгоритм, также включен в стандартную библиотеку Си. Исходник взят из glibc 2.11.1. 
+Скомпилирован в GCC 4.4.1 с ключом \TT{-Os} (оптимизация по размеру кода). 
+Листинг сделан дизассемблером IDA 4.9 из ELF-файла созданным GCC и линкером.}
+{Well-known algorithm, also included in standard C library. Source code was taken from glibc 2.11.1.
+Compiled in GCC 4.4.1 with \TT{-Os} option (code size optimization).
+Listing was done by IDA 4.9 disassembler from ELF-file generated by GCC and linker.}
+
+\IFRU{Для тех кто хочет использовать IDA в процессе изучения, вот здесь лежат .elf и .idb файлы, 
+.idb можно открыть при помощи бесплатой IDA 4.9:}
+{For those who wants use IDA while learning, here you may find .elf and .idb files,
+.idb can be opened with freeware IDA 4.9:}
+
+\url{http://conus.info/RE-tasks/middle/1/}
+
+\lstinputlisting{tasks/tasks_2_1_gcc.asm}
+
+\section{crackme / keygenme}
+
+/IFRU{Несколько моих keygenme\footnote{программа имитирующая защиту вымышленной программы, 
+для которой нужно сделать генератор ключей/лицензий.}:}
+{Couple of my keygenmes\footnote{program which imitates fictional software protection, 
+for which one need to make a keys/licenses generator}:}
+
+\url{http://crackmes.de/users/yonkie/}
+

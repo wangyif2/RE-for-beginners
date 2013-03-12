@@ -1,0 +1,53 @@
+﻿% done
+
+\section{\SignedNumbersSectionName}
+\label{sec:signednumbers}
+
+\newcommand{\URLS}{\url{http://en.wikipedia.org/wiki/Signed_number_representations}}
+
+\IFRU
+{Методов представления чисел с знаком "плюс" или "минус" несколько\footnote{\URLS}, 
+а в x86 применяется метод "дополнительный код" или "two's complement".}
+{There are several methods of representing signed numbers\footnote{\URLS}, 
+but in x86 architecture used "two's complement".}
+
+\IFRU{Разница в подходе к знаковым/беззнаковым числам, собственно, нужна потому что, например, 
+если представить 0xFFFFFFFE и 0x0000002 как беззнаковое, то первое число (4294967294) больше второго (2). 
+Если их оба представить как знаковые, то первое будет -2, которое, разумеется, меньше чем второе (2).
+Вот почему инструкции для условных переходов~\ref{sec:Jcc} представлены в обоих версиях ~--- 
+и для знаковых сравнений (например \JG, \JL) и для беззнаковых (\JA, \JB).}
+{Difference between signed and unsigned numbers is that if we represent 0xFFFFFFFE and 0x0000002 
+as unsigned, then first number (4294967294) is bigger than second (2). 
+If to represent them both as signed, first will be -2, and it is lesser than second (2). 
+That is the reason why conditional jumps~\ref{sec:Jcc} are present both for signed (for example, \JG, \JL) 
+and unsigned (\JA, \JB) operations.}
+
+\subsection{\IFRU{Переполнение integer}{Integer overflow}}
+
+\IFRU{Бывает так, что ошибки представления знаковых/беззнаковых могут привести к уязвимости 
+\IT{переполнение integer}.}
+{It is worth noting that incorrect representation of number can lead integer overflow vulnerability.}
+
+\IFRU{Например, есть некий сервис, который принимает по сети некие пакеты. 
+В пакете есть заголовок где указана длина пакета. Это 32-битное значение. 
+В процессе приема пакета, 
+сервис проверяет это значение и сверяет, больше ли оно чем максимальный размер пакета, скажем, константа
+\TT{MAX\_PACKET\_SIZE} (например, 10 килобайт). 
+Сравнение знаковое. Злоумышленник подставляет значение 0xFFFFFFFF. Это число трактуется как знаковое -1 
+и оно меньше чем 10000. Проверка проходит. Продолжаем дальше и копируем этот пакет куда-нибудь себе 
+в сегмент данных... вызов функции \TT{memcpy (dst, src, 0xFFFFFFFF)} скорее всего, 
+затрет много чего внутри процесса.}
+{For example, we have some network service, it receives network packets. 
+In that packets there are also field where subpacket length is coded. 
+It is 32-bit value. 
+After network packet received, service checking that field, and if it is larger than, 
+for example, some \TT{MAX\_PACKET\_SIZE} (let's say, 10 kilobytes), packet ignored as incorrect. 
+Comparison is signed. Intruder set this value to 0xFFFFFFFF. 
+While comparison, this number is considered as signed -1 and it's lesser than 10 kilobytes. 
+No error here. 
+Service would like to copy that subpacket to another place in memory and call 
+\TT{memcpy (dst, src, 0xFFFFFFFF)} function: this operation, rapidly scratching a lot of 
+inside of process memory.}
+
+\IFRU{Немного подробнее}{More about it}: \url{http://www.phrack.org/issues.html?issue=60&id=10}
+

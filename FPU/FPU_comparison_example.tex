@@ -1,0 +1,288 @@
+﻿% done
+
+\subsection{\IFRU{Пример с сравнением}{Comparison example}}
+
+\IFRU{Попробуем теперь вот это:}{Let's try this:}
+
+\begin{lstlisting}
+double d_max (double a, double b)
+{
+	if (a>b)
+		return a;
+
+	return b;
+};
+\end{lstlisting}
+
+\IFRU{Несмотря на кажущуюся простоту этой функции, понять как она работает будет чуть сложнее.}
+{Despite simplicity of that function, it will be harder to understand how it works.}
+
+\IFRU{Вот что выдал MSVC 2010:}{MSVC 2010 generated:}
+
+\lstinputlisting{\IFRU{FPU/12_4_ru.asm}{FPU/12_4_en.asm}}
+
+\IFRU{Итак, \FLD загружает \TT{\_b} в регистр \STZERO.}
+{So, \FLD loading \TT{\_b} into \STZERO register.}
+
+\newcommand{\Czero}{\TT{C0}\xspace}
+\newcommand{\Ctwo}{\TT{C2}\xspace}
+\newcommand{\Cthree}{\TT{C3}\xspace}
+\newcommand{\CThreeBits}{\Cthree/\Ctwo/\Czero}
+
+\IFRU{\FCOMP сравнивает содержимое \STZERO с тем что лежит в \TT{\_a} и выставляет биты \CThreeBits в 
+регистре статуса FPU. Это 16-битный регистр отражающий текущее состояние FPU.} 
+{\FCOMP compares \STZERO register state with what is in \TT{\_a} value and set \CThreeBits bits in FPU 
+status word register. This is 16-bit register reflecting current state of FPU.} 
+
+\IFRU{Итак, биты \CThreeBits выставлены, но, к сожалению, у процессоров до Intel P6 
+\footnote{Intel P6 это Pentium Pro, Pentium II, и далее} нет инструкций условного перехода,
+проверяющих эти биты. 
+Возможно это исторически так сложилось (вспомните о том что FPU когда-то был вообще отдельным чипом). 
+А у Intel P6 появились инструкции \FCOMI/\FCOMIP/\FUCOMI/\FUCOMIP ~--- делающие тоже самое, 
+только напрямую модифицирующие флаги \ZF/\PF/\CF.}
+{For now \CThreeBits bits are set, but unfortunately, CPU before Intel P6
+\footnote{Intel P6 is Pentium Pro, Pentium II, etc} have not any conditional 
+jumps instructions which are checking these bits. 
+Probably, it is a matter of history (remember: FPU was separate chip in past). 
+Modern CPU starting at Intel P6 has \FCOMI/\FCOMIP/\FUCOMI/\FUCOMIP instructions ~--- 
+which does that same, but modifies CPU flags \ZF/\PF/\CF.}
+
+\IFRU{После этого, инструкция \FCOMP выдергивает одно значение из стека. 
+Это отличает её от \FCOM, которая просто сравнивает значения, оставляя стек в таком же состоянии.}
+{After bits are set, the \FCOMP instruction popping one variable from stack. 
+This is what differentiate if from \FCOM, which is just comparing values, leaving the stack at the same state.}
+
+\IFRU{\FNSTSW копирует содержимое регистра статуса в \AX. Биты \CThreeBits занимают позиции, 
+соответственно, 14, 10, 8, в этих позициях они и остаются в регистре \AX, 
+и все они расположены в старшей части регистра ~--- \AH.}
+{\FNSTSW copies FPU status word register to \AX. Bits \CThreeBits are placed at positions 14/10/8, 
+they will be at the same positions in \AX registers and all them are placed in high part of \AX ~--- \AH.}
+
+\begin{itemize}
+\item
+\IFRU{Если b>a в нашем случае, то биты \CThreeBits должны быть выставлены так:}
+{If b>a in our example, then \CThreeBits bits will be set as following:} 0, 0, 0.
+\item
+\IFRU{Если a>b, то биты будут выставлены:}{If a>b, then bits will be set:} 0, 0, 1.
+\item
+\IFRU{Если a=b, то биты будут выставлены так:}{If a=b, then bits will be set:} 1, 0, 0.
+\end{itemize}
+% TODO: table here?
+
+\IFRU{После исполнения \TT{test ah, 5}, бит \Cthree и \TT{C1} сбросится в ноль, 
+на позициях 0 и 2 (внутри регистра \AH) 
+останутся соответственно \Czero и \Ctwo.}
+{After \TT{test ah, 5} execution, bits \Cthree and \TT{C1} will be set to 0, 
+but at positions 0 и 2 (in \AH registers) 
+\Czero and \Ctwo bits will be leaved.}
+
+\IFRU{Теперь немного о \IT{parity flag}\footnote{флаг четности}. Еще один замечательный рудимент:} 
+{Now let's talk about parity flag. Yet another notable epoch rudiment.}
+
+\begin{framed}
+\begin{quotation}
+One common reason to test the parity flag actually has nothing to do with parity. The FPU has four condition flags 
+(C0 to C3), but they can not be tested directly, and must instead be first copied to the flags register. 
+When this happens, C0 is placed in the carry flag, C2 in the parity flag and C3 in the zero flag. 
+The C2 flag is set when e.g. incomparable floating point values (NaN or unsupported format) are compared 
+with the FUCOM instructions.\footnote{\href{http://en.wikipedia.org/wiki/Parity_flag}{wikipedia: parity flag}}
+\end{quotation}
+\end{framed}
+
+\IFRU
+{Этот флаг выставляется в 1 если количество едениц в последнем результате ~--- четно. И в ноль если ~--- нечетно.}
+{This flag is to be set to 1 if ones number is even. And to zero if odd.}
+
+\IFRU{Таким образом, что мы имеем, флаг \PF будет выставлен в еденицу, если \Czero и \Ctwo 
+оба нули или оба единицы. 
+И тогда сработает последующий \JP (\IT{jump if PF==1}). 
+Если мы вернемся чуть назад и посмотрим значения \CThreeBits 
+для разных вариантов, то увидим, что условный переход \JP сработает в двух случаях: если b>a или если a==b 
+(ведь бит \Cthree уже \IT{вылетел} после исполнения \TT{test ah, 5}).}
+{Thus, \PF flag will be set to 1 if both \Czero and \Ctwo are set to zero or both are ones. 
+And then following \JP (\IT{jump if PF==1}) will be triggered. 
+If we remembered values of \CThreeBits for different cases, we will see that conditional jump 
+\JP will be triggered in two cases: if b>a or a==b 
+(\Cthree bit is already not considering here, because it was cleared while execution of 
+\TT{test ah, 5} instruction).}
+
+\IFRU{Дальше все просто. Если условный переход сработал, то \FLD загрузит значение \TT{\_b} в \STZERO, 
+а если не сработал, то загрузится \TT{\_a} и произойдет выход из функции.}
+{It is all simple thereafter. If conditional jump was triggered, \FLD will load \TT{\_b} value 
+to \STZERO, and if it's not triggered, \TT{\_a} will be loaded.}
+
+\IFRU{Но это еще не все!}{But it is not over yet!}
+
+\subsubsection{\IFRU{А теперь скомпилим все это в MSVC 2010 с опцией \Ox}
+{Now let's compile it with MSVC 2010 with optimization option \Ox}}
+
+\lstinputlisting{\IFRU{FPU/12_5_ru.asm}{FPU/12_5_en.asm}}
+
+\IFRU{\FCOM отличается от \FCOMP тем что просто сравнивает значения и оставляет стек в том же состоянии. 
+В отличие от предыдущего примера, операнды здесь в другом порядке. 
+Поэтому и результат сравнения в \CThreeBits будет другим чем раньше:}
+{\FCOM is different from \FCOMP is that sense that it just comparing values and leave FPU stack 
+in the same state. 
+Unlike previous example, operands here in reversed order. 
+And that is why result of comparision in \CThreeBits will be different:}
+
+\begin{itemize}
+\item
+\IFRU{Если a>b в нашем случае, то биты \CThreeBits должны быть выставлены так:}
+{If a>b in our example, then \CThreeBits bits will be set as:} 0, 0, 0.
+\item
+\IFRU{Если b>a, то биты будут выставлены:}{If b>a, then bits will be set as:} 0, 0, 1.
+\item
+\IFRU{Если a=b, то биты будут выставлены так:}{If a=b, then bits will be set as:} 1, 0, 0.
+\end{itemize}
+% TODO: table?
+
+\IFRU{Инструкция \TT{test ah, 65} как бы оставляет только два бита ~--- \Cthree и \Czero. 
+Они оба будут нулями, если a>b: в таком случае переход \JNE не сработает. 
+Далее имеется инструкция \TT{FSTP ST(1)} ~--- эта инструкция копирует 
+значение \STZERO в указанный операнд и выдергивает одно значение из стека. В данном случае, 
+она копирует \STZERO 
+(где сейчас лежит \TT{\_a}) в \STONE. 
+После этого на вершине стека два раза лежат \TT{\_a}. Затем одно значение выдергивается. 
+После этого в \STZERO остается \TT{\_a} и функция завершается.}
+{It can be said, \TT{test ah, 65} instruction just leave two bits ~--- \Cthree и \Czero. 
+Both will be zeroes if a>b: in that case \JNE jump will not be triggered. 
+Then \TT{FSTP ST(1)} is following ~--- this instruction copies \STZERO value into operand and 
+popping one value from FPU stack. 
+In other words, that instruction copies \STZERO (where \TT{\_a} value now) into \STONE. 
+After that, two values of {\_a} are at the top of stack now. 
+After that, one value is popping.
+After that, \STZERO will contain {\_a} and function is finished.}
+
+\IFRU{Условный переход \JNE сработает в двух других случаях: если b>a или a==b. 
+\STZERO скопируется в \STZERO, что как бы холостая операция, 
+затем одно значение из стека вылетит и на вершине стека останется то что 
+до этого лежало в \STONE (то есть, \TT{\_b}). И функция завершится. 
+Эта инструкция используется здесь видимо потому что в FPU нет инструкции которая просто выдергивает 
+значение из стека и больше ничего.}
+{Conditional jump \JNE is triggered in two cases: of b>a or a==b. 
+\STZERO into \STZERO will be copied, it is just like idle (\NOP) operation, then one value 
+is popping from stack and top of stack (\STZERO) will contain what was in \STONE before 
+(that is {\_b}). Then function finishes. 
+That instruction used here probably because FPU has no instruction to pop value from stack and 
+not to store it anywhere.}
+
+\IFRU{Но и это еще не все.}{Well, but it is still not over.}
+
+\subsubsection{GCC 4.4.1}
+
+\lstinputlisting{\IFRU{FPU/12_6_ru.asm}{FPU/12_6_en.asm}}
+
+\IFRU{\FUCOMPP ~--- это почти то же что и \FCOM, только выкидывает из стека оба значения после сравнения, 
+а также несколько иначе реагирует на "не-числа".}
+{\FUCOMPP ~--- is almost like \FCOM, but popping both values from stack and handling 
+"not-a-numbers" differently.}
+
+\IFRU{Немного о \IT{не-числах}:}{More about \IT{not-a-numbers}}:
+
+\newcommand{\NANFN}{\IFRU{\footnote{\url{http://ru.wikipedia.org/wiki/NaN}}}
+{\footnote{\url{http://en.wikipedia.org/wiki/NaN}}}}
+
+\IFRU
+{FPU умеет работать со специальными переменными, которые числами не являются и называются "не числа" или 
+NaN\NANFN{}. 
+Это бесконечность, результат деления на ноль, и так далее. Нечисла бывают "тихие" и "сигнализирующие". 
+С первыми можно продолжать работать и далее, а вот если вы попытаетесь совершить какую-то операцию 
+с сигнализирующим нечислом, то сработает исключение.}
+{FPU is able to work with special values which are \IT{not-a-numbers} or 
+NaNs\NANFN{}. 
+These are infinity, result of dividing by zero, etc. 
+Not-a-numbers can be "quiet" and "signalling". It is possible to continue to work with "quiet" NaNs, 
+but if one try to do some operation with "signalling" NaNs ~--- an exception will be raised.}
+
+\IFRU{Так вот, \FCOM вызовет исключение если любой из операндов ~--- какое-либо нечисло.
+\FUCOM же вызовет исключение только если один из операндов именно "сигнализирующее нечисло".}
+{\FCOM will raise exception if any operand ~--- NaN. 
+\FUCOM will raise exception only if any operand ~--- signalling NaN (SNAN).}
+
+\IFRU{Далее мы видим \SAHF ~--- это довольно редкая инструкция в коде не использущим FPU. 
+8 бит из \AH перекладываются в младшие 8 бит регистра статуса процессора в таком порядке: 
+\TT{SF:ZF:-:AF:-:PF:-:CF <- AH}.}
+{The following instruction is \SAHF ~--- this is rare instruction in the code which is not use FPU. 
+8 bits from AH is movinto into lower 8 bits of CPU flags in the following order: 
+\TT{SF:ZF:-:AF:-:PF:-:CF <- AH}.}
+
+\IFRU{Вспомним, что \FNSTSW перегружает интересующие нас биты \CThreeBits в \AH, 
+и соответственно они будут в позициях 6, 2, 0 в регистре \AH.}
+{Let's remember that \FNSTSW is moving interesting for us bits \CThreeBits into \AH 
+and they will be in positions 6, 2, 0 in \AH register.}
+
+\IFRU{Иными словами, пара инструкций \TT{fnstsw  ax / sahf} перекладывает биты \CThreeBits в флаги \ZF, \PF, \CF.}
+{In other words, \TT{fnstsw  ax / sahf} instruction pair is moving \CThreeBits into \ZF, \PF, \CF CPU flags.}
+
+\IFRU{Теперь снова вспомним, какие значения бит \CThreeBits будут при каких результатах сравнения:}
+{Now let's also remember, what values of \CThreeBits bits will be set:}
+
+\begin{itemize}
+\item
+\IFRU{Если a больше b в нашем случае, то биты \CThreeBits должны быть выставлены так:}
+{If a is greater than b in our example, then \CThreeBits bits will be set as:} 0, 0, 0.
+\item
+\IFRU{Если a меньше b, то биты будут выставлены:}{if a is less than b, then bits will be set as:} 0, 0, 1.
+\item
+\IFRU{Если a=b, то биты будут выставлены так:}{If a=b, then bits will be set:} 1, 0, 0.
+\end{itemize}
+% TODO: table?
+
+\IFRU{Иными словами, после инструкций \FUCOMPP/\FNSTSW/\SAHF, мы получим такое состояние флагов:}
+{In other words, after \FUCOMPP/\FNSTSW/\SAHF instructions, we will have these CPU flags states:}
+
+\begin{itemize}
+\item
+\IFRU{Если a>b в нашем случае, то флаги будут выставлены так:}
+{If a>b, CPU flags will be set as:} \TT{ZF=0, PF=0, CF=0}.
+\item
+\IFRU{Если a<b, то флаги будут выставлены:}{If a<b, then CPU flags will be set as:} \TT{ZF=0, PF=0, CF=1}.
+\item
+\IFRU{Если a=b, то флаги будут выставлены так:}{If a=b, then CPU flags will be set as:} \TT{ZF=1, PF=0, CF=0}.
+\end{itemize}
+% TODO: table?
+
+\IFRU{Инструкция \SETNBE выставит в \AL единицу или ноль, в зависимости от флагов и условий. 
+Это почти аналог \JNBE, за тем лишь исключением, что \SETcc
+\footnote{\IT{cc} это \IT{condition code}}
+выставляет 1 или 0 в \AL, а \Jcc делает переход или нет. 
+\SETNBE запишет 1 если только \TT{CF=0} и \TT{ZF=0}. Если это не так, то запишет 0 в \AL.}
+{How \SETNBE instruction will store 1 or 0 to AL: it is depends of CPU flags. 
+It is almost \JNBE instruction counterpart, with exception that что \SETcc 
+\footnote{\IT{cc} is \IT{condition code}} is storing 1 or 0 to \AL, but \Jcc do actual jump or not. 
+\SETNBE store 1 only if \TT{CF=0} and \TT{ZF=0}. If it is not true, zero will be stored into \AL.}
+
+\IFRU{\CF будет 0 и \ZF будет 0 одновременно только в одном случае: если a>b.}
+{Both \CF is 0 and \ZF is 0 simultaneously only in one case: if a>b.}
+
+\IFRU{Тогда в \AL будет записана единица, последующий условный переход \JZ взят не будет, 
+и функция вернет \TT{\_a}. 
+В остальных случаях, функция вернет \TT{\_b}.}
+{Then one will be stored to \AL and the following \JZ will not be triggered and function will 
+return {\_a}. On all other cases, {\_b} will be returned.}
+
+\IFRU{Но и это еще не конец.}{But it is still not over.}
+
+\subsubsection{GCC 4.4.1 \IFRU{с оптимизацией \TT{-O3}}{with \TT{-O3} optimization turned on}}
+
+\lstinputlisting{\IFRU{FPU/12_7_ru.asm}{FPU/12_7_en.asm}}
+
+\IFRU{Почти все что здесь есть уже описано мною, кроме одного: использование \JA после \SAHF. 
+Действительно, инструкции условных переходов "больше", "меньше", "равно" для сравнения беззнаковых чисел 
+(\JA, \JAE, \JB, \JBE, \JE/\JZ, \JNA, \JNAE, \JNB, \JNBE, \JNE/\JNZ) проверяют только флаги \CF и \ZF. 
+И биты \CThreeBits после сравнения перекладываются в эти флаги аккурат так, 
+чтобы перечисленные инструкции переходов могли работать. \JA сработает если \CF и \ZF обнулены.}
+{It is almost the same except one: \JA usage instead of \SAHF. 
+Actually, conditional jump instructions checking "larger", "lesser" or "equal" for unsigned number comparison 
+(\JA, \JAE, \JB, \JBE, \JE/\JZ, \JNA, \JNAE, \JNB, \JNBE, \JNE/\JNZ) are checking only \CF and \ZF flags. 
+And \CThreeBits bits after comparison are moving into these flags exactly in the same fashion 
+so conditional jumps will work here. \JA will work if both \CF are \ZF zero.}
+
+\IFRU{Таким образом, перечисленные инструкции условного перехода можно использовать после инструкций \FNSTSW/\SAHF.}
+{Thereby, conditional jumps instructions listed here can be used after \FNSTSW/\SAHF instructions pair.}
+
+\IFRU{Вполне возможно что биты статуса FPU \CThreeBits преднамерено были размещены таким образом, 
+чтобы переноситься на базовые флаги процессора без перестановок.}
+{It seems, FPU \CThreeBits status bits was placed there deliberately so to map them to base CPU flags 
+without additional permutations.}

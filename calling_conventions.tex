@@ -1,0 +1,181 @@
+﻿% done
+
+\section{\IFRU{Способы передачи аргументов при вызове функций}{Arguments passing methods (calling conventions)}}
+\label{sec:callingconventions}
+
+\subsection{cdecl}
+
+\IFRU{Этот способ передачи аргументов через стек чаще всего используется в языках \CCpp.}
+{This is the most popular method for arguments passing to functions in \CCpp languages.}
+
+\IFRU{Вызывающая функция заталкивает в стек аргументы в обратном порядке: сначала последний аргумент в стек, 
+затем предпоследний, и в самом конце ~--- первый аргумент. 
+Вызывающая функция должна также затем вернуть указатель \ESP в нормальное состояние, 
+после возврата вызываемой функции.}
+{Caller pushing arguments to stack in reverse order: last argument, then penultimate element 
+and finally ~--- first argument.
+Caller also should return back \ESP to its initial state after callee function exit.}
+
+\begin{lstlisting}
+push arg3
+push arg2
+push arg3
+call function
+add esp, 12 ; return ESP
+\end{lstlisting}
+
+\subsection{stdcall}
+\label{stdcall}
+
+\newcommand{\SIZEOFINT}{\IFRU{Размер переменной типа \Tint ~--- 4 в x86-системах и 8 в x64-системах}
+{Size of \Tint type variable is 4 in x86 systems and 8 in x64 systems}}
+
+\IFRU{Это почти то же что и \IT{cdecl}, за исключением того что вызываемая функция сама возвращает \ESP 
+в нормальное состояние, выполнив инструкцию \TT{RET x} вместо \RET, где 
+\TT{x = количество\_аргументов * sizeof(int)\footnote{\SIZEOFINT}}.
+Вызывающая функция не будет корректировать указатель стека при помощи инструкции \TT{add esp, x}.}
+{Almost the same thing as \IT{cdecl}, with the exception that callee set \ESP to initial state executing \TT{RET x} instruction instead of \RET, where
+\TT{x = arguments number * sizeof(int)\footnote{\SIZEOFINT}}.
+Caller will not adjust stack pointer by \TT{add esp, x} instruction.}
+
+\begin{lstlisting}
+push arg3
+push arg2
+push arg1
+call function
+
+function:
+... do something ...
+ret 12
+\end{lstlisting}
+
+\IFRU{Этот способ используется почти везде в системных библиотеках win32, но не в win64 (о win64 смотрите ниже).}
+{This method is ubiquitous in win32 standard libraries, but not in win64 (see below about win64).}
+
+\subsubsection{\IFRU{Функции с переменным количеством аргументов}{Variable arguments number functions}}
+
+\IFRU{Функции вроде \printf, должно быть, единственный случай функций в \CCpp с переменным количеством аргументов,
+но с их помощью можно легко проследить очень важную разницу между \IT{cdecl} и \IT{stdcall}.
+Начнем с того, что компилятор знает сколько аргументов было у \printf.}
+{\printf-like functions are, probably, the only case of variable arguments functions in \CCpp,
+but it's easy to illustrate an important difference between \IT{cdecl} and \IT{stdcall} with help of it.
+Let's start with the idea that compiler knows argument count of each \printf function calling.}
+\IFRU{Однако, вызываемая функция \printf, которая уже давно скомпилена 
+и находится в системной библиотеке MSVCRT.DLL (если говорить о Windows), 
+не знает сколько аргументов ей передали, хотя может установить их количество по строке формата.}
+{However, called \printf, which is already compiled and located in MSVCRT.DLL (if to talk about Windows),
+do not have information about how much arguments were passed, however it can determine it from format string.}
+\IFRU{Таким образом, если бы \printf была \IT{stdcall}-функцией и возвращала указатель стека 
+в первоначальное состояние 
+подсчитав количество аргументов в строке формата, это была бы потенциально опасная ситуация, 
+когда одна опечатка программиста могла бы вызывать неожиданные падения программы. 
+Таким образом, для таких функций \IT{stdcall} явно не подходит, а подходит \IT{cdecl}.}
+{Thus, if \printf would be \IT{stdcall}-function and restored stack pointer to its initial state by counting
+number of arguments in format string, this could be dangerous situation, when one programmer's typo may
+provoke sudden program crash.
+Thus it's not suitable for such functions to use \IT{stdcall}, \IT{cdecl} is better.}
+
+\subsection{fastcall}
+\label{fastcall}
+
+\IFRU{Это общее название для передачи некоторых аргументов через регистры а всех остальных ~--- через стек. 
+На более старых процессорах, это работало потенциально быстрее чем \IT{cdecl}/\IT{stdcall}.}
+{That's general naming for a method for passing some of arguments via registers and all others ~--- via stack.
+It worked faster than \IT{cdecl}/\IT{stdcall} on older CPUs.}
+\IFRU{Это не стандартизированый способ, поэтому разные компиляторы делают это по-своему. 
+Разумеется, если у вас есть, скажем, две DLL, одна использует другую, и обе они собраны с \IT{fastcall}
+но разными компиляторами, возможно будут проблемы.}
+{It's not a standardized way, so, different compilers may do it differently.
+Of course, if you have two DLLs, one use another, and they are built by different compilers with \IT{fastcall}
+calling conventions, there will be a problems.}
+
+\IFRU{MSVC и GCC передает первый и второй аргумент через \ECX и \EDX а остальные аргументы через стек. 
+Вызываемая функция возвращает указатель стека в первоначальное состояние.}
+{Both MSVC and GCC passing first and second argument via \ECX and \EDX and other arguments via stack.
+Caller should restore stack pointer into initial state.}
+
+\IFRU{Указатель стека должен быть возвращен в первоначальное состояние вызываемой функцией, 
+как в случае \IT{stdcall}.}
+{Stack pointer should be restored to initial state by callee, like in \IT{stdcall}.}
+
+\begin{lstlisting}
+push arg3
+mov edx, arg2
+mov ecx, arg1
+call function
+
+function:
+.. do something ..
+ret 4
+\end{lstlisting}
+
+\subsubsection{GCC regparm}
+
+\newcommand{\URLREGPARMM}{\url{http://www.ohse.de/uwe/articles/gcc-attributes.html\#func-regparm}}
+
+\IFRU{Это в некотором роде, развитие \IT{fastcall}\footnote{\URLREGPARMM}. 
+Опцией \TT{-mregparm=x} можно указывать, 
+сколько аргументов компилятор будет передавать через регистры. Максимально 3. 
+В этом случае будут задействованы регистры \EAX, \EDX и \ECX.}
+{It's \IT{fastcall} evolution\footnote{\URLREGPARMM} is some sense.
+With the \TT{-mregparm} option it's possible to set, how many arguments will be passed via registers. 
+3 at maximum.
+Thus, \EAX, \EDX and \ECX registers will be used.}
+
+\IFRU{Разумеется, если аргументов у функции меньше трех, то будет задействована только часть регистров.}
+{Of course, if number of arguments is less then 3, not all registers 3 will be used.}
+
+\IFRU{Вызывающая функция возвращает указатель стека в первоначальное состояние.}
+{Caller restores stack pointer to its initial state.}
+
+% TODO: example
+
+\subsection{thiscall}
+\label{thiscall}
+
+\IFRU{В С++, это передача в функцию-метод указателя \IT{this} на объект.}
+{In C++, it's a \IT{this} pointer to object passing into function-method.}
+
+\IFRU{В MSVC указатель \IT{this} обычно передается в регистре \ECX.}
+{In MSVC, \IT{this} is usually passed in \ECX register.}
+
+\IFRU{В GCC указатель \IT{this} обычно передается как самый первый аргумент. 
+Таким образом, внутри будет видно, что у всех функций-методов на один аргумент больше.}
+{In GCC, \IT{this} pointer is passed as a first function-method argument.
+Thus it will be seen that internally all function-methods has extra argument for it.}
+
+% TODO: example
+
+\subsection{x86-64}
+
+\subsubsection{win64}
+
+\IFRU{В win64 метод передачи всех параметров немного похож на \TT{fastcall}. 
+Первые 4 аргумента записываются в регистры \TT{RCX}, \TT{RDX}, \TT{R8}, \TT{R9}, а остальные ~--- в стек. 
+Вызывающая функция также должна подготовить место из 32 байт или для четырех 64-битных значений, 
+чтобы вызываемая функция могла сохранить там первые 4 аргумента. 
+Короткие функции могут использовать переменные прямо из регистров, 
+но б\'{о}льшие могут сохранять их значения на будущее.}
+{The method of arguments passing in Win64 is somewhat resembling to \TT{fastcall}.
+First 4 arguments are passed via \TT{RCX}, \TT{RDX}, \TT{R8}, \TT{R9}, others ~--- via stack.
+Caller also must prepare a place for 32 bytes or 4 64-bit values,
+so then callee can save there first 4 arguments.
+Short functions may use argument values just from registers,
+but larger may save its values for further use.}
+
+\IFRU{Вызывающая функция должна вернуть указатель стека в первоначальное состояние.}
+{Caller also should return stack pointer into initial state.}
+
+\IFRU{Это же соглашение используется и в системных библиотеках Windows x86-64 (вместо \IT{stdcall} в win32).}
+{This calling convention is also used in Windows x86-64 system DLLs (instead if \IT{stdcall} in win32).}
+
+% TODO: example
+
+\subsection{\IFRU{Возвращение переменных типа \Tfloat, \Tdouble}{Returning values of \Tfloat and \Tdouble type}}
+
+\IFRU{Во всех соглашениях кроме Win64, переменная типа \Tfloat или \Tdouble возвращается через регистр FPU \STZERO.}
+{In all conventions except of Win64, values of type \Tfloat or \Tdouble returning via FPU register \STZERO.}
+
+\IFRU{В Win64 переменные типа \Tfloat и \Tdouble возвращаются в регистре \XMMZERO вместо \STZERO.}
+{In Win64, return values of \Tfloat and \Tdouble types are returned in \XMMZERO register instead of \STZERO.}
+

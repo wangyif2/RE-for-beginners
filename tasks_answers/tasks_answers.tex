@@ -1,0 +1,301 @@
+% done
+
+\chapter{\IFRU{Ответы на задачи}{Tasks solutions}}
+
+\section{\IFRU{Легкий уровень}{Easy level}}
+
+\subsection{\Task 1.1}
+
+\IFRU{Решение}{Solution}: \TT{toupper()}.
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+char toupper ( char c )
+{
+    if( c >= 'a' && c <= 'z' ) {
+        c = c - 'a' + 'A';
+    }
+    return( c );
+}
+\end{lstlisting}
+
+\subsection{\Task 1.2}
+
+\IFRU{Ответ}{Solution}: \TT{atoi()}
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+int atoi ( const *p )  /* convert ASCII string to integer */
+{
+    int i;
+    char s;
+
+    while( isspace ( *p ) )
+        ++p;
+    s = *p;
+    if( s == '+' || s == '-' )
+        ++p;
+    i = 0;
+    while( isdigit(*p) ) {
+        i = i * 10 + *p - '0';
+        ++p;
+    }
+    if( s == '-' )
+        i = - i;
+    return( i );
+}
+\end{lstlisting}
+
+\subsection{\Task 1.3}
+
+\IFRU{Ответ}{Solution}: \TT{srand()} / \TT{rand()}.
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+static unsigned int v;
+
+void srand (unsigned int s)
+{
+        v = s;
+}
+
+int rand ()
+{
+        return( ((v = v * 214013L
+            + 2531011L) >> 16) & 0x7fff );
+}
+\end{lstlisting}
+
+\subsection{\Task 1.4}
+
+\IFRU{Ответ}{Solution}: \TT{strstr()}.
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+char * strstr (
+        const char * str1,
+        const char * str2
+        )
+{
+        char *cp = (char *) str1;
+        char *s1, *s2;
+
+        if ( !*str2 )
+            return((char *)str1);
+
+        while (*cp)
+        {
+                s1 = cp;
+                s2 = (char *) str2;
+
+                while ( *s1 && *s2 && !(*s1-*s2) )
+                        s1++, s2++;
+
+                if (!*s2)
+                        return(cp);
+
+                cp++;
+        }
+
+        return(NULL);
+
+}
+\end{lstlisting}
+
+\subsection{\Task 1.5}
+
+\IFRU{Подсказка}{Hint} \#1: \IFRU{Не забывайте что}{Keep in mind that} \TT{\_\_v} ~--- 
+\IFRU{глобальная переменная}{global variable}.
+
+\IFRU{Подсказка}{Hint} \#2: \IFRU{Эта функция вызывается startup-кодом перед вызовом \main}
+{That function is called in startup code, before \main execution}.
+
+\IFRU{Ответ: это проверка на наличие FDIV-ошибки в ранних процессорах Pentium}
+{Solution: early Pentium CPU FDIV bug checking}\footnote{\url{http://en.wikipedia.org/wiki/Pentium_FDIV_bug}}.
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+unsigned _v; // _v
+
+enum e {
+    PROB_P5_DIV = 0x0001
+};
+
+void f( void ) // __verify_pentium_fdiv_bug
+{
+    /*
+        Verify we have got the Pentium FDIV problem.
+        The volatiles are to scare the optimizer away.
+    */
+    volatile double     v1     = 4195835;
+    volatile double     v2   = 3145727;
+
+    if( (v1 - (v1/v2)*v2) > 1.0e-8 ) {
+        _v |= PROB_P5_DIV;
+    }
+}
+\end{lstlisting}
+
+\subsection{\Task 1.6}
+
+\IFRU{Подсказка: если погуглить применяемую здесь константу, это может помочь.}
+{Hint: it might be helpful to google a constant used here.}
+
+\IFRU{Ответ: шифрование алгоритмом TEA}{Solution: TEA encryption algorithm}\footnote{Tiny Encryption Algorithm}.
+
+\IFRU{Исходник на Си}{C source code} (\IFRU{взято с}{taken from} \url{http://en.wikipedia.org/wiki/Tiny_Encryption_Algorithm}):
+
+\begin{lstlisting}
+void f (unsigned int* v, unsigned int* k) {
+    unsigned int v0=v[0], v1=v[1], sum=0, i;           /* set up */
+    unsigned int delta=0x9e3779b9;                     /* a key schedule constant */
+    unsigned int k0=k[0], k1=k[1], k2=k[2], k3=k[3];   /* cache key */
+    for (i=0; i < 32; i++) {                       /* basic cycle start */
+        sum += delta;
+        v0 += ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
+        v1 += ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);  
+    }                                              /* end cycle */
+    v[0]=v0; v[1]=v1;
+}
+\end{lstlisting}
+
+\subsection{\Task 1.7}
+
+\IFRU{Подсказка: таблица содержит зараннее вычисленные значения. 
+Можно было бы обойтись и без нее, но тогда функция работала бы чуть медленнее.}
+{Hint: the table contain pre-calculated values.
+It's possible to implement the function without it, but it will work slower, though.}
+
+\IFRU{Ответ: эта функция переставляет все биты во входном 32-битном слове наоборот. 
+Это \TT{lib/bitrev.c} из ядра Linux.}
+{Solution: this function reverse all bits in input 32-bit integer. 
+It's \TT{lib/bitrev.c} from Linux kernel.}
+
+\IFRU{Исходник на Си}{C source code}:
+
+\begin{lstlisting}
+const unsigned char byte_rev_table[256] = {
+	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
+	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
+	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
+	0x18, 0x98, 0x58, 0xd8, 0x38, 0xb8, 0x78, 0xf8,
+	0x04, 0x84, 0x44, 0xc4, 0x24, 0xa4, 0x64, 0xe4,
+	0x14, 0x94, 0x54, 0xd4, 0x34, 0xb4, 0x74, 0xf4,
+	0x0c, 0x8c, 0x4c, 0xcc, 0x2c, 0xac, 0x6c, 0xec,
+	0x1c, 0x9c, 0x5c, 0xdc, 0x3c, 0xbc, 0x7c, 0xfc,
+	0x02, 0x82, 0x42, 0xc2, 0x22, 0xa2, 0x62, 0xe2,
+	0x12, 0x92, 0x52, 0xd2, 0x32, 0xb2, 0x72, 0xf2,
+	0x0a, 0x8a, 0x4a, 0xca, 0x2a, 0xaa, 0x6a, 0xea,
+	0x1a, 0x9a, 0x5a, 0xda, 0x3a, 0xba, 0x7a, 0xfa,
+	0x06, 0x86, 0x46, 0xc6, 0x26, 0xa6, 0x66, 0xe6,
+	0x16, 0x96, 0x56, 0xd6, 0x36, 0xb6, 0x76, 0xf6,
+	0x0e, 0x8e, 0x4e, 0xce, 0x2e, 0xae, 0x6e, 0xee,
+	0x1e, 0x9e, 0x5e, 0xde, 0x3e, 0xbe, 0x7e, 0xfe,
+	0x01, 0x81, 0x41, 0xc1, 0x21, 0xa1, 0x61, 0xe1,
+	0x11, 0x91, 0x51, 0xd1, 0x31, 0xb1, 0x71, 0xf1,
+	0x09, 0x89, 0x49, 0xc9, 0x29, 0xa9, 0x69, 0xe9,
+	0x19, 0x99, 0x59, 0xd9, 0x39, 0xb9, 0x79, 0xf9,
+	0x05, 0x85, 0x45, 0xc5, 0x25, 0xa5, 0x65, 0xe5,
+	0x15, 0x95, 0x55, 0xd5, 0x35, 0xb5, 0x75, 0xf5,
+	0x0d, 0x8d, 0x4d, 0xcd, 0x2d, 0xad, 0x6d, 0xed,
+	0x1d, 0x9d, 0x5d, 0xdd, 0x3d, 0xbd, 0x7d, 0xfd,
+	0x03, 0x83, 0x43, 0xc3, 0x23, 0xa3, 0x63, 0xe3,
+	0x13, 0x93, 0x53, 0xd3, 0x33, 0xb3, 0x73, 0xf3,
+	0x0b, 0x8b, 0x4b, 0xcb, 0x2b, 0xab, 0x6b, 0xeb,
+	0x1b, 0x9b, 0x5b, 0xdb, 0x3b, 0xbb, 0x7b, 0xfb,
+	0x07, 0x87, 0x47, 0xc7, 0x27, 0xa7, 0x67, 0xe7,
+	0x17, 0x97, 0x57, 0xd7, 0x37, 0xb7, 0x77, 0xf7,
+	0x0f, 0x8f, 0x4f, 0xcf, 0x2f, 0xaf, 0x6f, 0xef,
+	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
+};
+
+unsigned char bitrev8(unsigned char byte)
+{
+	return byte_rev_table[byte];
+}
+
+unsigned short bitrev16(unsigned short x)
+{
+	return (bitrev8(x & 0xff) << 8) | bitrev8(x >> 8);
+}
+
+/**
+ * bitrev32 - reverse the order of bits in a unsigned int value
+ * @x: value to be bit-reversed
+ */
+
+unsigned int bitrev32(unsigned int x)
+{
+	return (bitrev16(x & 0xffff) << 16) | bitrev16(x >> 16);
+}
+\end{lstlisting}
+
+\subsection{\Task 1.8}
+
+\IFRU{Ответ: сложение двух матриц размером 100 на 200 элементов типа \Tdouble.}
+{Solution: two 100*200 matrices of type \Tdouble addition.}
+
+\IFRU{Исходник на \CCpp}{\CCpp source code}:
+
+\begin{lstlisting}
+#define M    100
+#define N    200
+
+void s(double *a, double *b, double *c)
+{
+  for(int i=0;i<N;i++)
+    for(int j=0;j<M;j++)
+      *(c+i*M+j)=*(a+i*M+j) + *(b+i*M+j);
+};
+\end{lstlisting}
+
+\subsection{\Task 1.9}
+
+\IFRU{Ответ: умножение двух матриц размерами 100*200 и 100*300 элементов типа \Tdouble, результат: матрица 100*300.}
+{Solution: two matrices (one is 100*200, second is 100*300) of type \Tdouble multiplication, result: 100*300
+matrix.}
+
+\IFRU{Исходник на \CCpp}{\CCpp source code}:
+
+\begin{lstlisting}
+#define M     100
+#define N     200
+#define P     300
+
+void m(double *a, double *b, double *c)
+{
+  for(int i=0;i<M;i++)
+    for(int j=0;j<P;j++)
+    {
+      *(c+i*M+j)=0;
+      for (int k=0;k<N;k++) *(c+i*M+j)+=*(a+i*M+j) * *(b+i*M+j);
+    }
+};
+\end{lstlisting}
+
+\section{\IFRU{Средний уровень}{Middle level}}
+
+\subsection{\Task 2.1}
+
+\IFRU{Подсказка \#1: В этом коде есть одна особенность, по которой можно значительно сузить поиск функции в glibc.}
+{Hint \#1: The code has one characteristic thing, considering it, it may help narrowing search of right function 
+among glibc functions}.
+
+\IFRU{Ответ: особенность ~--- это вызов callback-функции}{Solution: characteristic ~--- is callback-function
+calling}~\ref{sec:pointerstofunctions}, 
+\IFRU{указатель на которую передается в четвертом аргументе}{pointer to which is passed in 4th
+argument}. \IFRU{Это}{It's} \TT{quicksort()}.
+
+\IFRU{Исходник на Си:}{C source code:}
+
+\lstinputlisting{tasks_answers/tasks_2_1.c}
+

@@ -1,0 +1,42 @@
+﻿% done
+
+\section{\IFRU{И еще немного о возвращаемых результатах}{One more word about results returning.}}
+
+\newcommand{\MSDNURL}{\href{http://msdn.microsoft.com/en-us/library/7572ztz4.aspx}{MSDN: Return Values (C++)}}
+
+\IFRU
+{Резльутат выполнения функции возвращается\footnote{См.также: \MSDNURL} через регистр \EAX, а если результат типа байт, 
+то в самой младшей части \EAX ~--- \AL. Если функция возвращает число с плавающей запятой, 
+то регистр FPU \STZERO будет использован.}
+{Function execution result is often returned\footnote{See also: \MSDNURL} in \EAX register. 
+If it's byte type ~--- then in lowest register \EAX part ~--- \AL. If function returning \Tfloat number, FPU register 
+\STZERO will be used instead.}
+
+\IFRU{Вот почему старые компиляторы Си не способны создавать функции возвращающие нечто большее нежели помещается 
+в один регистр (обычно, тип \Tint), а когда нужно, приходится возвращать через указатели, указываемые 
+в аргументах.}
+{That is why old C compilers can't create functions capable of returning something not fitting in one 
+register (usually type \Tint), but if one need it, one should return information via pointers passed 
+in function arguments.}
+\IFRU{Хотя, позже и стало возможным, вернуть, скажем, целую структуру, но этот метод до сих пор не очень популярен. 
+Если функция должна вернуть структуру, вызывающая функция должна сама, скрыто и прозрачно для программиста, 
+выделить место и передать указатель на него в качестве первого аргумента. Это почти то же самое 
+что и сделать это вручную, но компилятор прячет это.
+
+Небольшой пример:}
+{Now it is possible, to return, let's say, whole structure, but its still not very popular. 
+If function should return a large structure, caller must allocate it and pass pointer to it via first argument, 
+hiddenly and transparently for programmer. 
+That is almost the same as to pass pointer in first argument manually, but compiler hide this.
+
+Small example:}
+
+\lstinputlisting{return_results/6_1.c}
+
+\IFRU{... получим}{... what we got} (MSVC 2010 \Ox):
+
+\lstinputlisting{return_results/6_1.asm}
+
+\IFRU{Имя внутреннего макроса для передачи указателя на структуру здесь это \TT{\$T3853}.}
+{Macro name for internal variable passing pointer to structure is \TT{\$T3853} here.}
+

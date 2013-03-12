@@ -1,0 +1,114 @@
+﻿% done
+
+\section{\IFRU{Циклы}{Loops}}
+
+\IFRU
+{Для организации циклов, в архитектуре x86 есть старая инструкция \LOOP, 
+она проверяет значение регистра \ECX и если оно не ноль, делает декремент \ECX и переход 
+по метке указанной в операнде. 
+Возможно, эта инструкция не слишком удобная, поэтому я не видел современных компиляторов, 
+которые использовали бы её. Так что, если вы видите где-то \LOOP, то это, с большой вероятностью, 
+написанный руками код на ассемблере.}
+{There is a special \LOOP instruction in x86 instruction set, it is checking \ECX register value and 
+if it is not zero, do \ECX decrement and pass control flow to label mentioned in \LOOP operand. 
+Probably, this instruction is not very handy, so, I didn't ever see any modern compiler emitting it automatically. 
+So, if you see the instruction somewhere in code, it is most likely this is hand-written piece of assembler code.}
+
+\IFRU{Кстати, в качестве домашнего задания, вы можете попытаться объяснить, чем именно эта инструкция неудобна.}
+{By the way, as home exercise, you could try to explain, why this instruction is not very handy.}
+
+\IFRU{Циклы на \CCpp описываются при помощи \TT{for()}, \TT{while()}, \TT{do/while()}.}
+{In \CCpp loops are defined by \TT{for()}, \TT{while()}, \TT{do/while()} statements.}
+
+\IFRU{Начнем с}{Let's start with} \TT{for()}.
+
+\IFRU{Это выражение описывает инициализацию, условие, что делать после каждой итерации (инкремент/декремент) 
+и тело цикла.}
+{This statement defines loop initialization (set loop counter to initial value), 
+loop condition (is counter is bigger than a limit?), what is done at each iteration (increment/decrement) 
+and of course loop body.}
+
+\IFRU{\lstinputlisting{loops/loops_1_ru.c}}{\lstinputlisting{loops/loops_1_en.c}}
+
+\IFRU{Примерно также, генерируемый код и будет состоять из этих четырех частей.}
+{So, generated code will be consisted of four parts too.}
+
+\IFRU{Возьмем пример:}{Let's start with simple example:}
+
+\begin{lstlisting}
+int main()
+{
+	int i;
+
+	for (i=2; i<10; i++)
+		f(i);
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{Имеем в итоге}{Result} (MSVC 2010):
+
+\lstinputlisting{\IFRU{loops/9_1_ru_msvc.asm}{loops/9_1_en_msvc.asm}}
+
+\IFRU{В принципе, ничего необычного.}{Nothing very special, as we see.}
+
+\IFRU{GCC 4.4.1 выдает примерно такой же код, с небольшой разницей:}
+{GCC 4.4.1 emitting almost the same code, with small difference:}
+
+\lstinputlisting{loops/9_1_en_gcc.asm}
+
+\IFRU{Интересно становится, если скомпилируем этот же код при помощи MSVC 2010 с включенной оптимизацией}
+{Now let's see what we will get if optimization is turned on} (\Ox):
+
+\lstinputlisting{loops/9_1_msvc_Ox.asm}
+
+\IFRU{Здесь происходит следующее: переменную \IT{i} компилятор не выделяет в локальном стеке, 
+а выделяет целый регистр под нее: \ESI.}
+{What is going on here is: place for \IT{i} variable is not allocated in local stack anymore, 
+but even individual register: \ESI. This is possible in such small functions where not so 
+much local variables are used.}
+
+\IFRU{В принципе, все то же самое, только теперь одна важная особенность: \TT{f()} не должна менять значение \ESI. 
+Наш компилятор уверен в этом, а если бы и была необходимость использовать регистр \ESI в функции \TT{f()}, 
+то её значение сохранялось бы в стеке. Примерно также как и в нашем листинге: 
+обратите внимание на \TT{PUSH ESI/POP ESI} в начале и конце функции.}
+{One very important property is that \TT{f()} function should not change \ESI value, in fact, it should 
+not use that register at all. Our compiler is sure here. 
+And if compiler decided to use \ESI in \TT{f()} too, it would be saved then at \TT{f()} function 
+prologue and restored at \TT{f()} epilogue. Almost like in our listing: please note \TT{PUSH ESI/POP ESI}
+at the function begin and end.}
+
+\IFRU
+{Попробуем GCC 4.4.1 с максимальной оптимизацией (\TT{-O3}):}
+{Let's try GCC 4.4.1 with maximal optimization turned on (\TT{-O3} option):}
+
+\lstinputlisting{loops/9_1_en_gcc_O3.asm}
+
+\IFRU
+{Однако, GCC просто \IT{развернул} цикл\footnote{loop unwinding в англоязчной литературе}.}
+{Huh, GCC just unwind our loop.}
+
+\IFRU{Делается это в тех случаях, когда итераций не слишком много, как в нашем примере, 
+и можно немного сэкономить время, убрав все инструкции обеспечивающие цикл. 
+В качестве обратной стороны медали, размер кода увеличился.}
+{Loop unwinding has advantage in that cases when there are not so much iterations and 
+we could economy some execution speed by removing all loop supporting instructions. 
+On the other side, resulting code is obviously larger.}
+
+\IFRU{OK, увеличим максимальное значение \IT{i} в цикле до 100 и попробуем снова. GCC выдаст подобное:}
+{OK, let's increase maximal value of \IT{i} to 100 and try again. GCC resulting:}
+
+\lstinputlisting{loops/9_2_gcc_en.asm}
+
+\IFRU{Это уже похоже на то что сделал MSVC 2010 в режиме оптимизации (\Ox). 
+За исключением того, что под переменную \TT{i} будет выделен регистр \EBX.}
+{It's quite similar to what MSVC 2010 with optimization (\Ox) produce. 
+With the exception that \EBX register will be fixed to \TT{i} variable. }
+\IFRU{GCC уверен что этот регистр не будет 
+модифицироваться внутри \TT{f()}, а если вдруг это и прийдется там сделать, то его значение будет сохранено 
+в начале функции, прямо как в \main здесь.}
+{GCC is sure this register will not be modified inside of \TT{f()} function, 
+and if it will, it will be saved at the function prologue and restored at epilogue, 
+just like here in \main.}
+

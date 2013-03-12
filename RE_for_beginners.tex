@@ -1,0 +1,206 @@
+% done
+
+\documentclass[11pt,a4paper,oneside]{book}
+
+\ifdefined\RUSSIAN
+\usepackage[english,russian]{babel}
+\else
+\usepackage[russian,english]{babel}
+\fi
+
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{listingsutf8}
+\usepackage[cm]{fullpage}
+\usepackage[]{hyperref}
+\usepackage{color}
+\usepackage{fancyvrb}
+\usepackage{xspace}
+\usepackage{framed}
+
+\definecolor{lstbgcolor}{rgb}{0.94,0.94,0.94}
+
+\hypersetup{pdftex,colorlinks=true,allcolors=blue}
+
+\selectlanguage{english}
+\setcounter{chapter}{1}
+
+\lstset{ %
+    backgroundcolor=\color{lstbgcolor},
+    basicstyle=\footnotesize\ttfamily,
+    breaklines=true,
+    frame=single,
+    inputencoding=cp1251,
+}
+\renewcommand{\ttdefault}{cmtt} % need it here?
+
+\newcommand{\SignedNumbersSectionName}{\IFRU{Представление знака в числах}
+{Signed number representations}}
+
+\newcommand{\WorkingWithFloatAsWithStructSubSubSectionName}{\IFRU
+{Работа с типом float как со структурой}{Working with the float type as with a structure}}
+
+\begin{document}
+
+\include{macros}
+
+\VerbatimFootnotes
+
+\frontmatter
+\title{\IFRU{Краткое введение в reverse engineering для начинающих}
+{Quick introduction to reverse engineering for beginners}}
+
+\author{\IFRU{Денис Юричев}{Dennis Yurichev} \TT{<dennis@yurichev.com>}}
+
+\date{\today}
+\maketitle
+
+\tableofcontents
+\cleardoublepage
+
+\include{preface}
+
+\mainmatter
+
+\chapter{\IFRU{Паттерны компиляторов}{Compiler's patterns}}
+
+\IFRU
+{Когда я учил Си, а затем Си++, я просто писал небольшие куски кода, компилировал и смотрел что 
+получилось на ассемблере, так мне понять было намного проще. Я делал это такое количество раз, 
+что связь между кодом на \CCpp и тем что генерирует компилятор вбилась мне в подсознание достаточно 
+глубоко, поэтому я могу глядя на код на асме сразу понимать, в общих чертах, что там было написано 
+на Си. Возможно это поможет кому-то еще, попробую описать некоторые примеры.}
+{When I first learn C and then C++, I was just writing small pieces of code, compiling it and see what 
+is producing in assembler, that was an easy way to me. I did it a lot times and relation 
+between \CCpp code and what compiler produce was imprinted in my mind so deep so that 
+I can quickly understand what was in C code when I look at produced x86 code. 
+Perhaps, this method may be helpful for anyone other, so I'll try to describe here some examples.}
+
+% TODO: english/russian version is also present: URL
+
+\include{helloworld/hw}
+
+\include{stack/stack}
+
+\include{printf/printf}
+
+\include{scanf/scanf}
+
+\include{passing_arguments/passing_arguments}
+
+\include{return_results/return_results}
+
+\include{jcc/jcc}
+
+\include{switch/switch}
+
+\include{loops/loops}
+
+\include{strlen/strlen}
+
+\include{division_by_9/division_by_9}
+
+\include{FPU/FPU}
+
+\include{arrays/arrays}
+
+\include{bitfields/bitfields}
+
+\include{structs/structs}
+
+\include{classes/classes}
+% TODO: RTTI
+
+\include{unions/unions}
+
+\include{pointers_to_functions/pointers_to_functions}
+
+\include{SIMD/SIMD}
+
+\include{x64/x64}
+
+\chapter{\IFRU{Еще кое-что}{Couple things to add}}
+
+\include{LEA}
+\include{prolog_epilog}
+\include{npad}
+\include{signed_numbers}
+\include{calling_conventions}
+
+\include{digging_into_code/digging_into_code}
+
+\include{tasks/tasks}
+
+\include{tools}
+
+\include{reading}
+
+\chapter{\IFRU{Прочее}{Other things}}
+
+\section{\IFRU{Еще примеры}{More examples}}
+
+\begin{itemize}
+\item
+(eng) \url{http://conus.info/RE-articles/qr9.html}
+\item
+(eng) \url{http://conus.info/RE-articles/sapgui.html}
+\end{itemize}
+
+\section{\IFRU{Аномалии компиляторов}{Compiler's anomalies}}
+
+\IFRU{Intel C++ 10.1 которым скомпилирован Oracle RDBMS 11.2 Linux86, может сгенерировать два \JZ идущих подряд, 
+причем на второй \JZ нет ссылки ниоткуда. Второй \JZ таким образом, не имеет никакого смысла.}
+{Intel C++ 10.1, which was used for Oracle RDBMS 11.2 Linux86 compilation, may emit two \JZ in row,
+and there are no references to the second \JZ. Second \JZ is thus senseless.}
+
+\IFRU{Например, kdli.o из}{For example, kdli.o from} libserver11.a:
+
+\begin{lstlisting}
+.text:08114CF1                   loc_8114CF1:                            ; CODE XREF: __PGOSF539_kdlimemSer+89A
+.text:08114CF1                                                           ; __PGOSF539_kdlimemSer+3994
+.text:08114CF1 8B 45 08                          mov     eax, [ebp+arg_0]
+.text:08114CF4 0F B6 50 14                       movzx   edx, byte ptr [eax+14h]
+.text:08114CF8 F6 C2 01                          test    dl, 1
+.text:08114CFB 0F 85 17 08 00 00                 jnz     loc_8115518
+.text:08114D01 85 C9                             test    ecx, ecx
+.text:08114D03 0F 84 8A 00 00 00                 jz      loc_8114D93
+.text:08114D09 0F 84 09 08 00 00                 jz      loc_8115518
+.text:08114D0F 8B 53 08                          mov     edx, [ebx+8]
+.text:08114D12 89 55 FC                          mov     [ebp+var_4], edx
+.text:08114D15 31 C0                             xor     eax, eax
+.text:08114D17 89 45 F4                          mov     [ebp+var_C], eax
+.text:08114D1A 50                                push    eax
+.text:08114D1B 52                                push    edx
+.text:08114D1C E8 03 54 00 00                    call    len2nbytes
+.text:08114D21 83 C4 08                          add     esp, 8
+\end{lstlisting}
+
+\IFRU{Еще там же:}{From the same code:}
+
+\begin{lstlisting}
+.text:0811A2A5                   loc_811A2A5:                            ; CODE XREF: kdliSerLengths+11C
+.text:0811A2A5                                                           ; kdliSerLengths+1C1
+.text:0811A2A5 8B 7D 08                          mov     edi, [ebp+arg_0]
+.text:0811A2A8 8B 7F 10                          mov     edi, [edi+10h]
+.text:0811A2AB 0F B6 57 14                       movzx   edx, byte ptr [edi+14h]
+.text:0811A2AF F6 C2 01                          test    dl, 1
+.text:0811A2B2 75 3E                             jnz     short loc_811A2F2
+.text:0811A2B4 83 E0 01                          and     eax, 1
+.text:0811A2B7 74 1F                             jz      short loc_811A2D8
+.text:0811A2B9 74 37                             jz      short loc_811A2F2
+.text:0811A2BB 6A 00                             push    0
+.text:0811A2BD FF 71 08                          push    dword ptr [ecx+8]
+.text:0811A2C0 E8 5F FE FF FF                    call    len2nbytes
+\end{lstlisting}
+
+\IFRU{Возможно, это ошибка его кодегенератора, не выявленная тестами 
+(ведь результирующий код и так работает нормально).}
+{It's probably code generator bug wasn't found by tests, because, 
+resulting code is working correctly anyway.}
+
+\include{tasks_answers/tasks_answers}
+
+\end{document}

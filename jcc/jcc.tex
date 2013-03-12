@@ -1,0 +1,68 @@
+﻿% done
+
+\section{\IFRU{Условные переходы}{Conditional jumps}}
+\label{sec:Jcc}
+
+\IFRU{Об условных переходах.}{Now about conditional jumps.}
+
+\lstinputlisting{jcc/7_1.c}
+
+\IFRU{Имеем в итоге функцию \TT{f\_signed()}:}{What we have in \TT{f\_signed()} function:}
+
+\lstinputlisting{jcc/7_2.asm}
+
+\IFRU
+{Первая инструкция \JLE значит \IT{Jump if Larger or Equal}. То есть, если второй операнд больше первого или 
+равен ему, произойдет переход туда, где будет следующая проверка.}
+{First instruction \JLE mean \IT{Jump if Larger or Equal}. In other words, if second operand is 
+larger than first or equal, control flow will be passed to address or label mentioned in instruction.}
+\IFRU
+{А если это условие не срабатывает, то есть второй операнд меньше первого, то перехода не будет, 
+и сработает первый \printf.}
+{But if this condition will not trigger (second operand less than first), control flow will 
+not be altered and first \printf will be called.}
+\IFRU
+{Вторая проверка это \JNE: \IT{Jump if Not Equal}. Переход не произойдет, если операнды равны.}
+{The second check is \JNE: \IT{Jump if Not Equal}. Control flow will not altered if operands are 
+equals to each other.}
+\IFRU
+{Третья проверка \JGE: \IT{Jump if Greater or Equal} ~--- переход если второй операнд больше 
+первого или равен ему.}
+{The third check is \JGE: \IT{Jump if Greater or Equal} ~--- jump if second operand is larger 
+than first or they are equals to each other.}
+\IFRU
+{Кстати, если все три условных перехода сработают, ни один \printf не вызовется. 
+Но, без внешнего вмешательства, это, пожалуй, невозможно.}
+{By the way, if all three conditional jumps are triggered, no \printf will be called at all. 
+But, without special intervention, it is nearly impossible.}
+
+GCC 4.4.1 \IFRU{производит почти такой же код, за исключением}
+{produce almost the same code, but with} \TT{puts()}~\ref{puts} \IFRU{вместо}{instead of} \printf.
+
+\IFRU{Далее функция \TT{f\_unsigned()} скомпилированная GCC:}
+{Now let's take a look of \TT{f\_unsigned()} produced by GCC:}
+
+\lstinputlisting{jcc/7_3_gcc.asm}
+
+\IFRU{Здесь все то же самое, только инструкции условных переходов немного другие: 
+\JBE ~--- \IT{Jump if Below or Equal} и \JAE ~--- \IT{Jump if Above or Equal}.}
+{Almost the same, with exception of instructions: \JBE ~--- \IT{Jump if Below or Equal} 
+and \JAE ~--- \IT{Jump if Above or Equal}.}
+\IFRU{Эти инструкции (\JA/\JAE/\JB/\JBE) отличаются от \JG/\JGE/\JL/\JLE тем, 
+что работают с беззнаковыми переменными.}
+{These instructions (\JA/\JAE/\JB/\JBE) is different from \JG/\JGE/\JL/\JLE in that way, 
+it works with unsigned numbers.}
+
+\IFRU{Отступление: представление знака в числах}
+{See also section about signed number representations}~\ref{sec:signednumbers}.
+\IFRU{Таким образом, увидев где используется \JG/\JL вместо \JA/\JB и наоборот, 
+можно сказать почти уверенно насчет того, 
+является ли тип переменной знаковым (signed) или беззнаковым (unsigned).}
+{So, where we see usage of \JG/\JL instead of \JA/\JB or otherwise, 
+we can almost be sure about signed or unsigned type of variable.}
+
+\IFRU{Далее функция \main, где ничего нового для нас нет:}
+{Here is also \main function, where nothing new to us:}
+
+\lstinputlisting{jcc/7_4.asm}
+

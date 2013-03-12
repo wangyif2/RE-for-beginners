@@ -1,0 +1,55 @@
+﻿% done
+
+\section{\IFRU{Деление на 9}{Division by 9}}
+\label{sec:divisionbynine}
+
+\IFRU{Простая функция:}{Very simple function:}
+
+\begin{lstlisting}
+int f(int a)
+{
+	return a/9;
+};
+\end{lstlisting}
+
+\IFRU{Компилируется вполне предсказуемо:}{Is compiled in a very predictable way:}
+
+\lstinputlisting{\IFRU{division_by_9/11_1_msvc_ru.asm}{division_by_9/11_1_msvc_en.asm}}
+
+\IFRU{\IDIV делит 64-битное число хранящееся в паре регистров \TT{EDX:EAX} на значение в \ECX. 
+В результате, \EAX будет содержать результат деления, а \EDX ~--- остаток от деления. 
+Результат возвращается из функции через \EAX, так что после операции деления, 
+это значение не перекладывается больше никуда, 
+оно уже там где надо.}
+{\IDIV divides 64-bit number stored in \TT{EDX:EAX} register pair by value in \ECX register. 
+As a result, \EAX will contain quotient\footnote{result of division}, and \EDX ~--- remainder.
+Result is returning from f() function in \EAX register, so, that value is not moved anymore after division 
+operation, it is in right place already.}
+\IFRU
+{Из-за того что \IDIV требует пару регистров \TT{EDX:EAX}, то перед этим инструкция \TT{CDQ} 
+расширяет \EAX до 64-битного значения учитывая знак, также как это делает \MOVSX.}
+{Because \IDIV require value in \TT{EDX:EAX} register pair, \TT{CDQ} instruction (before \IDIV) extending 
+\EAX value to 64-bit value taking value sign into account, just as \MOVSX does.}
+\IFRU{Со включенной оптимизацией (\Ox) получается:}
+{If we turn optimization on (\Ox), we got:}
+
+\lstinputlisting{division_by_9/11_1_msvc_Ox.asm}
+
+\newcommand{\URLMSDN}{\href{http://blogs.msdn.com/b/devdev/archive/2005/12/12/502980.aspx}
+{MSDN: Integer division by constants}}
+\newcommand{\URLN}{http://www.nynaeve.net/?p=115}
+
+\IFRU{Это ~--- деление через умножение. Умножение конечно быстрее работает. 
+Поэтому можно используя этот трюк
+\footnote{Подробнее о делении через умножение: \URLMSDN, \url{\URLN}} 
+создать код эквивалентный тому что мы хотим и работающий быстрее.}
+{This is ~--- division using multiplication. Multiplication operation working much faster. 
+And it is possible to use that trick
+\footnote{More about division by multiplication: \URLMSDN, \url{\URLN}} 
+to produce a code which is equivalent and faster.}
+\IFRU
+{GCC 4.4.1 даже без включенной оптимизации генерит примерно такой же код как и MSVC с оптимизацией:}
+{GCC 4.4.1 even without optimization turned on, generate almost the same code as MSVC with optimization turned on:}
+
+\lstinputlisting{division_by_9/11_2_gcc.asm}
+

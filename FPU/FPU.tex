@@ -1,0 +1,70 @@
+﻿% done
+
+\section{\IFRU{Работа с FPU}{Work with FPU}}
+\label{sec:FPU}
+
+\newcommand{\FNURLSTACK}{\footnote{\url{http://en.wikipedia.org/wiki/Stack_machine}}}
+\newcommand{\FNURLFORTH}{\footnote{\url{http://en.wikipedia.org/wiki/Forth_(programming_language)}}}
+\newcommand{\FNURLIEEE}{\footnote{\url{http://en.wikipedia.org/wiki/IEEE_754-2008}}}
+\newcommand{\FNURLSP}{\footnote{\url{http://en.wikipedia.org/wiki/Single-precision_floating-point_format}}}
+\newcommand{\FNURLDP}{\footnote{\url{http://en.wikipedia.org/wiki/Double-precision_floating-point_format}}}
+\newcommand{\FNURLEP}{\footnote{\url{http://en.wikipedia.org/wiki/Extended_precision}}}
+
+FPU (\IT{Floating-point unit}) ~--- \IFRU{девайс в процессоре работающий с числами с плавающей запятой.}
+{is a device within main CPU specially designed to work with floating point numbers.}
+
+\IFRU{Раньше он назывался сопроцессором. Он немного похож на программируемый калькулятор и 
+стоит немного в стороне от основного процессора.}
+{It was called coprocessor in past. It looks like programmable calculator in some way and 
+stay aside of main processor.}
+
+\IFRU{Перед изучением FPU полезно ознакомиться с тем как работают стековые машины\FNURLSTACK, 
+или ознакомиться с основами языка Forth\FNURLFORTH.}
+{It is worth to study stack machines\FNURLSTACK before FPU studying, or learn Forth language basics\FNURLFORTH.}
+
+\IFRU{Интересен факт, что в свое время (до 80486) сопроцессор был отдельным чипом на материнской плате, 
+и вследствии его высокой цены, он стоял не всегда. Его можно было докупить отдельно и поставить.}
+{It is interesting to know that in past (before 80486 CPU) coprocessor was a separate chip 
+and it was not always settled on motherboard. It was possible to buy it separately and install.}
+
+\IFRU{Начиная с процессора 80486, FPU уже всегда входит в его состав.}
+{From the 80486 CPU, FPU is always present in it.}
+
+\IFRU{FPU имеет стек из восьми 80-битных регистров, каждый может содержать число в формате IEEE 754\FNURLIEEE.}
+{FPU has a stack capable to hold 8 80-bit registers, each register can hold a number 
+in IEEE 754\FNURLIEEE format.}
+
+\IFRU{В \CCpp типы имеются два типа для работы с числами с плавающей запятой, 
+это \Tfloat (\IT{число одинарной точности}\FNURLSP, 32 бита)
+\footnote{Формат представления float-чисел затрагивается в разделе 
+\IT{\WorkingWithFloatAsWithStructSubSubSectionName}~\ref{sec:floatasstruct}.}
+и \Tdouble (\IT{число двойной точности}\FNURLDP, 64 бита).}
+{\CCpp language offer at least two floating number types, \Tfloat (\IT{single-precision}\FNURLSP, 32 bits)
+\footnote{single precision float numbers format is also addressed in 
+\IT{\WorkingWithFloatAsWithStructSubSubSectionName}~\ref{sec:floatasstruct} section}
+and \Tdouble (\IT{double-precision}\FNURLDP, 64 bits).}
+
+\IFRU{GCC поддерживает тип \IT{long double} (\IT{extended precision}\FNURLEP, 80 бит), но MSVC ~--- нет.}
+{GCC also supports \IT{long double} type (\IT{extended precision}\FNURLEP, 80 bit) but MSVC is not.}
+
+\IFRU{Не смотря на то что \Tfloat занимает столько же места сколько \Tint на 32-битной архитектуре, 
+представление чисел, разумеется, совершенно другое.}
+{\Tfloat type require the same number of bits as \Tint type in 32-bit environment, 
+but number representation is completely different.}
+
+\IFRU{Число с плавающей точкой состоит из знака, мантиссы\footnote{\IT{significand} или \IT{fraction} 
+в анлоязчной литературе} и экспоненты.}
+{Number consisting of sign, significand (also called \IT{fraction}) and exponent.}
+
+\IFRU{Функция, имеющая \Tfloat или \Tdouble среди аргументов, получает эти значения через стек. 
+Если функция возвращает \Tfloat или \Tdouble, она оставляет значение в регистре \STZERO ~--- то есть, 
+на вершине FPU-стека.}
+{Function having \Tfloat or \Tdouble among argument list is getting that value via stack. 
+If function is returning \Tfloat or \Tdouble value, it leave that value in \STZERO 
+register ~--- at top of FPU stack.}
+
+\input{FPU/FPU_simple_example}
+
+\input{FPU/FPU_passing_floats}
+
+\input{FPU/FPU_comparison_example}

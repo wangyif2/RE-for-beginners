@@ -1,0 +1,25 @@
+﻿% done
+
+\subsection{\IFRU{Передача чисел с плавающей запятой в аргументах}{Passing floating point number via arguments}}
+
+\begin{lstlisting}
+int main ()
+{
+	printf ("32.01 ^ 1.54 = %lf\n", pow (32.01,1.54));
+
+	return 0;
+}
+\end{lstlisting}
+
+\IFRU{Посмотрим что у нас вышло}{Let's see what we got in} (MSVC 2010):
+
+\lstinputlisting{\IFRU{FPU/12_3_ru.asm}{FPU/12_3_en.asm}}
+
+\IFRU{\FLD и \FSTP перемешают переменные из/в сегмента данных в FPU-стек. 
+\TT{pow()}\footnote{стандартная функция Си, возводящая число в степень} достает оба значения из FPU-стека и 
+возвращает результат в \STZERO. 
+\printf берет 8 байт из стека и трактует их как переменную типа \Tdouble.}
+{\FLD and \FSTP are moving variables from/to data segment to FPU stack. 
+\TT{pow()}\footnote{standard C function, raises a number to the given power} taking both values from FPU-stack and 
+returning result in \STZERO. 
+\printf takes 8 bytes from local stack and interpret them as \Tdouble type variable.}

@@ -1,0 +1,158 @@
+﻿% done
+
+\section{switch()/case/default}
+
+\subsection{\IFRU{Если вариантов мало}{Few number of cases}}
+
+\lstinputlisting{switch/8_1.c}
+
+\IFRU{Это дает в итоге}{Result} (MSVC 2010):
+
+\lstinputlisting{switch/8_2_msvc.asm}
+
+\IFRU{В принципе, ничего особо нового для нас здесь, за исключением того, что компилятор зачем-то 
+перекладывает входящую переменную \TT{a} во временную в локальном стеке \TT{v64}.}
+{Nothing specially new to us, with the exception that compiler moving input variable 
+\TT{a} to temporary local variable \TT{tv64}.}
+
+\IFRU{Если скомпилировать это при помощи GCC 4.4.1, то будет почти то же самое, даже с максимальной оптимизацией 
+(ключ \TT{-O3}).}
+{If to compile the same in GCC 4.4.1, we'll get alsmost the same, even with maximal optimization 
+turned on (\TT{-O3} option).}
+
+\IFRU{Попробуем, включить оптимизацию кодегенератора}
+{Now let's turn on optimization in} MSVC (\Ox): \TT{cl 1.c /Fa1.asm /Ox}
+
+\lstinputlisting{switch/8_3_msvc.asm}
+
+\IFRU{Вот здесь уже все немного по-другому, причем не без грязных хаков.}
+{Here we can see even dirty hacks.}
+
+\IFRU
+{Первое: \TT{а} ложится в \EAX и от него отнимается 0. Звучит абсурдно, но нужно это для того, чтобы проверить, 
+0 ли в \EAX был до этого? Если да, то выставится флаг \ZF (что означает что результат отнимания нуля от числа 
+стал нулем) и первый условный переход \JE (\IT{Jump if Equal} или его синоним \JZ ~--- \IT{Jump if Zero}) 
+сработает на метку \TT{\$LN4@f}, где выводится сообщение \TT{'zero'}.
+Если первый переход не сработал, от значения отнимается по единице, 
+и если на какой-то стадии образуется в результате 0, то сработает соответствующий переход.}
+{First: \TT{a} is placed into \EAX and 0 subtracted from it. Sounds absurdly, but it may need to check if 
+0 was in \EAX before? If yes, flag \ZF will be set (this also mean that subtracting from zero is zero) 
+and first conditional jump \JE (\IT{Jump if Equal} or synonym \JZ ~--- \IT{Jump if Zero}) will be triggered 
+and control flow passed to \TT{\$LN4@f} label, where \TT{'zero'} message is begin printed. 
+If first jump was not triggered, 1 subtracted from input value and if at some stage 0 will be resulted, 
+corresponding jump will be triggered.}
+
+\IFRU{И в конце концов, если ни один из условных переходов не сработал, управление передается \printf
+с агрументом \TT{'something unknown'}.}
+{And if no jump triggered at all, control flow passed to \printf with argument \TT{'something unknown'}.}
+
+\IFRU
+{Второе: мы видим две, мягко говоря, необычные вещи: указатель на сообщение помещается в переменную \TT{a}, 
+и затем \printf вызывается не через \CALL, а через \JMP. Объяснение этому простое. 
+Вызывающая функция заталкивает в стек некоторое значение и через \CALL вызывает нашу функцию. 
+\CALL в свою очередь затакливает в стек адрес возврата и делает безусловный переход на адрес нашей функции. 
+Наша функция в самом начале (да и в любом её месте, потому что в теле функции нет ни одной инструкции, 
+которая меняет что-то в стеке или в \ESP) имеет следующую разметку стека:}
+{Second: we see unusual thing for us: string pointer is placed into \TT{a} variable, and 
+then \printf is called not via \CALL, but via \JMP. This could be explained simply. 
+Caller pushing to stack some value and via \CALL calling our function. 
+\CALL itself pushing returning address to stack and do unconditional jump to our function address. 
+Our function at any place of its execution (since it do not contain any instruction moving stack 
+pointer) has the following stack layout:}
+
+\begin{itemize}
+\item\ESP ~--- \IFRU{хранится адрес возврата}{pointing to return address} 
+\item\TT{ESP+4} ~--- \IFRU{хранится значение \TT{a}}{pointing to \TT{a} variable} 
+\end{itemize}
+
+\IFRU{С другой стороны, чтобы вызвать \printf нам нужна почти такая же разметка стека, 
+только в первом аргументе нужен указатель на строку. Что, собственно, этот код и делает.}
+{On the other side, when we need to call \printf here, we need exactly the same stack 
+layout, except of first \printf argument pointing to string. 
+And that is what our code does.}
+
+\IFRU{Он заменяет свой первый аргумент на другой и затем передает управление \printf, как если бы вызвали не 
+нашу функцию \TT{f()}, а сразу \printf. 
+\printf выводит некую строку на \TT{stdout}, затем исполняет инструкцию \RET, 
+которая из стека достает адрес возврата и управление передается в ту функцию, 
+которая вызывала \TT{f()}, минуя при этом саму \TT{f()}.}
+{It replaces function's first argument to different and 
+jumping to \printf, as if not our function \TT{f()} was called firstly, but immediately \printf.
+\printf printing some string to \TT{stdout} and then execute \RET instruction, which POPping 
+return address from stack and control flow is returned not to \TT{f()}, but to \TT{f()}'s callee, 
+escaping \TT{f()}.}
+
+\newcommand{\URLSJ}{\url{http://en.wikipedia.org/wiki/Setjmp.h}}
+\IFRU{Все это возможно потому что \printf вызывается в \TT{f()} в самом конце. 
+Все это чем-то даже похоже на \TT{longjmp()}\footnote{\URLSJ}.
+И все это, разумеется, сделано для экономии времени исполнения.}
+{All it's possible because \printf is called right at the end of \TT{f()} in any case. 
+In some way, it's all similar to \TT{longjmp()}\footnote{\URLSJ}. 
+And of course, it's all done for the sake of speed.}
+
+\subsection{\IFRU{И если много}{A lot of cases}}
+
+\IFRU{А если вветвлений слишком много, то конечно генерировать слишком длинный код с многочисленными \JE/\JNE 
+уже не так удобно.}
+{If \TT{switch()} statement contain a lot of case's, it is not very handy for compiler to emit too large code
+with a lot \JE/\JNE instructions.}
+
+\lstinputlisting{switch/8_4.c}
+
+\IFRU{Имеем в итоге}{We got} (MSVC 2010):
+
+\lstinputlisting{switch/8_5_msvc.asm}
+
+\IFRU{Здесь происходит следующее: в теле функции есть набор вызовов \printf с разными аргументами. 
+Все они имеют, конечно же, адреса, а также внутренние символические метки, которые придумал им компилятор.
+Все эти метки складываются во внутреннюю таблицу \TT{\$LN11@f}.}
+{OK, what we see here is: there are a set of \printf calls with various arguments. 
+All them has not only addresses in process memory, but also internal symbolic labels generated 
+by compiler. 
+All these labels are also places into \TT{\$LN11@f} internal table.}
+
+\IFRU{В начале функции, если \TT{a} больше 4, то сразу происходит переход на метку \TT{\$LN1@f}, 
+где вызывается \printf с аргументом \TT{'something unknown'}.}
+{At the function beginning, if \TT{a} is greater than 4, control flow is passed to label 
+\TT{\$LN1@f}, where \printf with argument \TT{'something unknown'} is called.}
+
+\IFRU{А если \TT{a} меньше или равно 4, то это значение умножается на 4 и прибавляется адрес таблицы с переходами. 
+Таким образом, получается адрес внутри таблицы, где лежит нужный адрес внутри тела функции. 
+Например, возьмем \TT{a} равным 2. 2*4 = 8 (ведь все элементы таблицы это адреса внутри 32-битного процесса, 
+таким образом, каждый элемент занимает 4 байта). 8 прибавить к \TT{\$LN11@f} ~--- это будет элемент таблицы,
+где лежит \TT{\$LN4@f}. \JMP вытаскивает из таблицы адрес \TT{\$LN4@f} и делает безусловный переход туда.}
+{And if \TT{a} value is less or equals to 4, let's multiply it by 4 and add \TT{\$LN1@f} 
+table address. That is how address inside of table is constructed, pointing exactly to the 
+element we need. For example, let's say \TT{a} is equal to 2. 2*4 = 8 (all table elements 
+are addresses within 32-bit process, that is why all elements contain 4 bytes). 
+Address of \TT{\$LN11@f} table + 8 = it will be table element where \TT{\$LN4@f} label is stored. 
+\JMP fetch \TT{\$LN4@f} address from the table and jump to it.}
+
+\IFRU{А там вызывается \printf с агрументом \TT{'two'}. 
+Дословно, инструкция \TT{jmp DWORD PTR \$LN11@f[ecx*4]} 
+означает \IT{перейти по DWORD, который лежит по адресу} \TT{\$LN11@f + ecx * 4}.}
+{Then corresponding \printf is called with argument \TT{'two'}. 
+Literally, \TT{jmp DWORD PTR \$LN11@f[ecx*4]} instruction mean 
+\IT{jump to DWORD, which is stored at address} \TT{\$LN11@f + ecx * 4}.}
+
+\TT{npad}~\ref{sec:npad} 
+\IFRU{это команда ассемблеру немного выровнять начало таблицы, дабы она располагалась по 
+адресу кратному 4 (или 16). Это нужно для того чтобы процессор мог эффективнее загружать 32-битное 
+значение из памяти, через шину с памятью, кеширование, итд.}
+{is assembler macro, aligning next label so that it will be stored at address aligned by 4 bytes (or 16). 
+This is very suitable for processor, because it can fetch 32-bit value from memory through bus, 
+through cache memory, etc, in much effective way if it is aligned.}
+
+\IFRU{Посмотрим что сгенерирует GCC 4.4.1:}{Let's see what GCC 4.4.1 generate:}
+
+\lstinputlisting{switch/8_6_gcc.asm}
+
+\IFRU{Практически то же самое, за исключением мелкого нюанса: аргумент из \TT{arg\_0} умножается на 4 
+при помощи сдвига влево на 2 бита (это почти то же самое что и умножение на 4)~\ref{SHR}. 
+Затем адрес метки внутри функции берется из массива \TT{off\_804855C} и адресуется при помощи 
+вычисленного индекса.}
+{It is almost the same, except little nuance: argument \TT{arg\_0} is multiplied by 4 with by
+shifting it to left by 2 bits (it is almost the same as multiplication by 4)~\ref{SHR}. 
+Then label address is taken from \TT{off\_804855C} array, address calculated and stored into 
+\EAX, then \TT{JMP EAX} do actual jump.}
+

@@ -1,0 +1,30 @@
+.text:7816CBF0 ; void __cdecl qsort(void *, unsigned int, unsigned int, int (__cdecl *)(const void *, const void *))
+.text:7816CBF0                 public _qsort
+.text:7816CBF0 _qsort          proc near
+.text:7816CBF0
+.text:7816CBF0 lo              = dword ptr -104h
+.text:7816CBF0 hi              = dword ptr -100h
+.text:7816CBF0 var_FC          = dword ptr -0FCh
+.text:7816CBF0 stkptr          = dword ptr -0F8h
+.text:7816CBF0 lostk           = dword ptr -0F4h
+.text:7816CBF0 histk           = dword ptr -7Ch
+.text:7816CBF0 base            = dword ptr  4
+.text:7816CBF0 num             = dword ptr  8
+.text:7816CBF0 width           = dword ptr  0Ch
+.text:7816CBF0 comp            = dword ptr  10h
+.text:7816CBF0
+.text:7816CBF0                 sub     esp, 100h
+
+....
+
+.text:7816CCE0 loc_7816CCE0:                           ; CODE XREF: _qsort+B1
+.text:7816CCE0                 shr     eax, 1
+.text:7816CCE2                 imul    eax, ebp
+.text:7816CCE5                 add     eax, ebx
+.text:7816CCE7                 mov     edi, eax
+.text:7816CCE9                 push    edi
+.text:7816CCEA                 push    ebx
+.text:7816CCEB                 call    [esp+118h+comp]
+.text:7816CCF2                 add     esp, 8
+.text:7816CCF5                 test    eax, eax
+.text:7816CCF7                 jle     short loc_7816CD04

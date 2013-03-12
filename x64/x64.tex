@@ -1,0 +1,104 @@
+% done
+
+\section{x86-64}
+
+\IFRU{Это расширение x86-архитуктуры до 64 бит.}{It's a 64-bit extension to x86-architecture.}
+
+\IFRU{С точки зрения начинающего reverse engineer-а, наиболее важные отличия от 32-битного x86 это:}
+{From the reverse engineer's perspective, most important differences are:}
+
+\begin{itemize}
+
+\item
+\IFRU{Почти все регистры (кроме FPU и SIMD) расширены до 64-бит и получили префикс r-. 
+И еще 8 регистров добавлено. 
+В итоге имеются эти регистры общего пользования:}
+{Almost all registers (except FPU and SIMD) are extended to 64 bits and got r- prefix.
+8 additional registers added.
+Now general purpose registers are:} \TT{rax}, \TT{rbx}, \TT{rcx}, \TT{rdx}, 
+\TT{rbp}, \TT{rsp}, \TT{rsi}, \TT{rdi}, \TT{r8}, \TT{r9}, \TT{r10}, 
+\TT{r11}, \TT{r12}, \TT{r13}, \TT{r14}, \TT{r15}. 
+
+\IFRU{К ним также можно обращаться так же как и прежде. Например, для доступа к младшим 32 битам \TT{RAX} 
+можно использовать \EAX.}
+{It's still possible to access to \IT{older} register parts as usual. 
+For example, it's possible to access lower 32-bit part of \TT{RAX} using \EAX.}
+
+\IFRU{У новых регистров \TT{r8-r15} также имеются их \IT{младшие части}: \TT{r8d-r15d} 
+(младшие 32-битные части), 
+\TT{r8w-r15w} (младшие 16-битные части), \TT{r8b-r15b} (младшие 8-битные части).}
+{New \TT{r8-r15} registers also has its \IT{lower parts}: \TT{r8d-r15d} (lower 32-bit parts),
+\TT{r8w-r15w} (lower 16-bit parts), \TT{r8b-r15b} (lower 8-bit parts).}
+
+\IFRU{Удвоено количество SIMD-регистров: с 8 до 16:}
+{SIMD-registers number are doubled: from 8 to 16:} \TT{XMM0-XMM15}.
+
+\item
+\IFRU{В win64 передача всех параметров немного иная, это немного похоже на fastcall~\ref{fastcall}. 
+Первые 4 аргумента записываются в регистры \TT{RCX}, \TT{RDX}, \TT{R8}, \TT{R9}, а остальные ~--- в стек. 
+Вызывающая функция также должна подготовить место из 32 байт чтобы вызываемая функция могла сохранить 
+там первые 4 аргумента и использовать эти регистры по своему усмотрению. 
+Короткие функции могут использовать аргументы прямо из регистров, но б\'{о}льшие функции могут сохранять 
+их значения на будущее.}
+{In Win64, function calling convention is slightly different, somewhat resembling fastcall~\ref{fastcall}.
+First 4 arguments stored in \TT{RCX}, \TT{RDX}, \TT{R8}, \TT{R9} registers, others ~--- in stack.
+Caller function should also allocate 32 bytes so the callee may save there 4 first arguments and use these 
+registers for own needs.
+Short functions may use arguments just from registers, but larger may save their values into stack.}
+
+\IFRU{См.также в соответствующем разделе о способах передачи аргументов через стек}
+{See also section about calling conventions}~\ref{sec:callingconventions}.
+
+\item
+\IFRU{Сишный \Tint остается 32-битным для совместимости. Все указатели теперь 64-битные.}
+{C \Tint type is still 32-bit for compatibility. All pointers are 64-bit now.}
+
+\end{itemize}
+
+\IFRU{Из-за того что регистров общего пользования теперь вдвое больше, у компиляторов теперь больше 
+свободного места для маневра называемого \IT{register allocation}\footnote{распределение переменных по регистрам}. 
+Для нас это означает, что в итоговом коде будет меньше локальных переменных.}
+{Since now registers number are doubled, compilers has more space now for maneuvering calling 
+\IT{register allocation}\footnote{assigning variables to registers}.
+What it meanings for us, emitted code will contain less local variables.}
+
+\IFRU{Для примера, функция вычисляющая первый S-бокс алгоритма шифрования DES, 
+она обрабатывает сразу 32/64/128/256 значений, в зависимости от типа \TT{DES\_type} (uint32, uint64, SSE2 или AVX), 
+методом bitslice DES (больше об этом методе читайте здесь~\ref{bitslicedes}):}
+{For example, function calculating first S-box of DES encryption algorithm, it processing
+32/64/128/256 values at once (depending on \TT{DES\_type} type (uint32, uint64, SSE2 or AVX)) 
+using bitslice DES method
+(read more about this method here ~\ref{bitslicedes}):}
+
+\lstinputlisting{x64/19_1.c}
+
+\IFRU{Здесь много локальных переменных. Конечно, далеко не все они будут в локальном стеке. 
+Компилируем обычным MSVC 2008 с опцией \Ox:}
+{There is a lot of local variables. Of course, not them all will be in local stack.
+Let's compile it with MSVC 2008 with \Ox option:}
+
+\lstinputlisting{x64/19_2_msvc_Ox.asm}
+
+\IFRU{5 переменных компилятору пришлось разместить в локальном стеке.}
+{5 variables was allocated in local stack by compiler.}
+
+\IFRU{Теперь попробуем то же самое только в 64-битной версии MSVC 2008:}
+{Now let's try the same thing in 64-bit version of MSVC 2008:}
+
+\lstinputlisting{x64/19_3_msvc_x64.asm}
+
+\IFRU{Компилятор ничего не выделил в локальном стеке, а \TT{x36} это синоним для \TT{a5}.}
+{Nothing allocated in local stack by compiler, \TT{x36} is synonym for \TT{a5}.}
+
+\IFRU{Кстати, видно что функция сохраняет регистры \TT{RCX}, \TT{RDX} в отведенных для 
+этого вызываемой функцией местах, 
+а \TT{R8} и \TT{R9} не сохраняет, а начинает использовать их сразу.}
+{By the way, we can see here, the function saved \TT{RCX} and \TT{RDX} registers in allocated by caller space,
+but \TT{R8} and \TT{R9} are not saved but used from the beginning.}
+
+\IFRU{Кстати, существуют процессоры с еще большим количеством регистров общего использования, например, 
+Itanium ~--- 128 регистров.}
+{By the way, there are CPUs with much more general purpose registers, Itanium, for example ~---
+128 registers.}
+
+

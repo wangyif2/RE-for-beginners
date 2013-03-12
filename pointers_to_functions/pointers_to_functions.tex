@@ -1,0 +1,156 @@
+﻿% done
+
+\section{\IFRU{Указатели на функции}{Pointers to functions}}
+\label{sec:pointerstofunctions}
+
+\IFRU{Указатель на функцию, в целом, как и любой другой указатель, просто адрес указывающий на начало функции 
+в сегменте кода.}
+{Pointer to function, as any other pointer, is just an address of function beginning in its code segment.}
+
+\IFRU{Это применяется часто в т.н. callback-ах}{It is often used in callbacks}
+\footnote{\url{http://en.wikipedia.org/wiki/Callback_(computer_science)}}.
+
+\IFRU{Известные примеры:}{Well-known examples are:}
+
+\begin{itemize}
+\item
+\qsort\footnote{\url{http://en.wikipedia.org/wiki/Qsort_(C_standard_library)}},
+{\TT{atexit()}}\footnote{\url{http://www.opengroup.org/onlinepubs/009695399/functions/atexit.html}} \IFRU{из стандартной библиотеки Си}{from the standard C library}; 
+\item
+\IFRU{сигналы в *NIX ОС}{signals in *NIX OS}\footnote{\url{http://en.wikipedia.org/wiki/Signal.h}};
+\item
+\IFRU{запуск тредов}{thread starting}: \TT{CreateThread()} (win32), \TT{pthread\_create()} (POSIX);
+\item
+\IFRU{множество функций win32, например}{a lot of win32 functions, for example} \TT{EnumChildWindows()}\footnote{\url{http://msdn.microsoft.com/en-us/library/ms633494(VS.85).aspx}}.
+\end{itemize}
+
+\IFRU{Итак, функция \qsort это реализация алгоритма "быстрой сортировки". 
+Функция может сортировать что угодно, 
+любые типы данных, но при условии что вы имеете функцию сравнения двух элементов данных и 
+\qsort может вызывать её.}
+{So, \qsort function is a \CCpp standard library quicksort implemenation. The functions is able to sort
+anything, any types of data, if you have a function for two elements comparison and \qsort is able
+to call it.}
+
+\IFRU{Эта функция сравнения может определяться так:}{The comparison function can be defined as:}
+
+\begin{lstlisting}
+int (*compare)(const void *, const void *)
+\end{lstlisting}
+
+\IFRU{Воспользуемся немного модифицированным примером, который я нашел вот}
+{Let's use slightly modified example I found} \href{http://cplus.about.com/od/learningc/ss/pointers2_8.htm}
+{\IFRU{здесь}{here}}:
+
+\lstinputlisting{pointers_to_functions/17_1.c}
+
+\IFRU{Компилируем в MSVC 2010 (я убрал некоторые части для краткости) с опцией \Ox}
+{Let's compile it in MSVC 2010 (I omitted some parts for the sake of brefity) with \Ox option}:
+
+\lstinputlisting{pointers_to_functions/17_2_msvc_Ox.asm}
+
+\IFRU{Ничего особо удивительного здесь мы не видим. В качестве четвертого аргумента, 
+в \qsort просто передается адрес метки \TT{\_comp}, где собственно и располагается функция \TT{comp()}.}
+{Nothing surprising so far. As a fourth argument, an address of label \TT{\_comp} is passed, that's just a place
+where function \TT{comp()} located.}
+
+\IFRU{Как \qsort вызывает её?}{How \qsort calling it?}
+
+\IFRU{Посмотрим в MSVCR80.DLL (эта DLL куда в MSVC вынесены функции из стандартных библиотек Си):}
+{Let's take a look into this function located in MSVCR80.DLL (a MSVC DLL module with C standard library functions):}
+
+\lstinputlisting{pointers_to_functions/17_3_MSVCR.lst}
+
+\IFRU{\TT{comp} ~--- это четвертый аргумент функции. 
+Здесь просто передается управление по адресу указанному в \TT{comp}. 
+Перед этим подготавливается два аргумента для функции \TT{comp()}. Далее, проверяется результат её выполнения.}
+{\TT{comp} ~--- is fourth function argument.
+Here the control is just passed to the address in \TT{comp}.
+Before it, two arguments prepared for \TT{comp()}. Its result is checked after its execution.}
+
+\IFRU{Вот почему использование указателей на функции ~--- это опасно. 
+Во-первых, если вызвать \qsort с неправильным указателем на функцию, 
+то \qsort, дойдя до этого вызова, может передать управление неизвестно куда, 
+процесс упадет, и эту ошибку можно будет найти не сразу.}
+{That's why it's dangerous to use pointers to functions.
+First of all, if you call \qsort with incorrect pointer to function, \qsort may pass control
+to incorrect place, process may crash and this bug will be hard to find.}
+
+\IFRU{Во-вторых, типизация callback-функции должна строго соблюдаться, 
+вызов не той функции с не теми аргументами не того типа, 
+может привести к плачевным результатам, 
+хотя падение процесса это и не проблема ~--- а проблема это найти ошибку ~--- ведь компилятор 
+на стадии компиляции может вас и не предупредить о потенциальных неприятностях.}
+{Second reason is that callback function types should comply strictly, calling wrong function
+with wrong arguments of wrong types may lead to serious problems, however, process crashing is not a 
+big problem ~--- big problem is to determine a reason of crashing ~--- because compiler may be 
+silent about potential trouble while compiling.}
+
+\subsection{GCC}
+
+\IFRU{Не слишком большая разница:}{Not a big difference:}
+
+\begin{lstlisting}
+                lea     eax, [esp+40h+var_28]
+                mov     [esp+40h+var_40], eax
+                mov     [esp+40h+var_28], 764h
+                mov     [esp+40h+var_24], 2Dh
+                mov     [esp+40h+var_20], 0C8h
+                mov     [esp+40h+var_1C], 0FFFFFF9Eh
+                mov     [esp+40h+var_18], 0FF7h
+                mov     [esp+40h+var_14], 5
+                mov     [esp+40h+var_10], 0FFFFCFC7h
+                mov     [esp+40h+var_C], 43Fh
+                mov     [esp+40h+var_8], 58h
+                mov     [esp+40h+var_4], 0FFFE7960h
+                mov     [esp+40h+var_34], offset comp
+                mov     [esp+40h+var_38], 4
+                mov     [esp+40h+var_3C], 0Ah
+                call    _qsort
+\end{lstlisting}
+
+\IFRU{Функция \TT{comp()}}{\TT{comp()} function}:
+
+\begin{lstlisting}
+                public comp
+comp            proc near
+
+arg_0           = dword ptr  8
+arg_4           = dword ptr  0Ch
+
+                push    ebp
+                mov     ebp, esp
+                mov     eax, [ebp+arg_4]
+                mov     ecx, [ebp+arg_0]
+                mov     edx, [eax]
+                xor     eax, eax
+                cmp     [ecx], edx
+                jnz     short loc_8048458
+                pop     ebp
+                retn
+loc_8048458:
+                setnl   al
+                movzx   eax, al
+                lea     eax, [eax+eax-1]
+                pop     ebp
+                retn
+comp            endp
+\end{lstlisting}
+
+\IFRU{Реализация \qsort находится в \TT{libc.so.6}, и представляет собой просто враппер для \TT{qsort\_r()}.}
+{\qsort implementation is located in \TT{libc.so.6} and it is in fact just a wrapper for \TT{qsort\_r()}.}
+
+\IFRU{Она, в свою очередь, вызывает \TT{quicksort()}, где есть вызовы определенной нами функции через 
+переданный указатель:}
+{It will call then \TT{quicksort()}, where our defined function will be called via passed pointer:}
+
+\IFRU{(файл libc.so.6, версия glibc ~--- 2.10.1)}{(File libc.so.6, glibc version ~--- 2.10.1)}
+
+\begin{lstlisting}
+.text:0002DDF6                 mov     edx, [ebp+arg_10]
+.text:0002DDF9                 mov     [esp+4], esi
+.text:0002DDFD                 mov     [esp], edi
+.text:0002DE00                 mov     [esp+8], edx
+.text:0002DE04                 call    [ebp+arg_C]
+...
+\end{lstlisting}

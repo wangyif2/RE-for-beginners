@@ -1,0 +1,339 @@
+﻿% done
+
+\section{\IFRU{Массивы}{Arrays}}
+\label{arrays}
+
+\IFRU{Массив это просто набор переменных в памяти, обязательно лежащих рядом, и обязательно одного типа.}
+{Array is just a set of variables in memory, always lying next to each other, always has same type.}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int main() 
+{
+	int a[20];
+	int i;
+
+	for (i=0; i<20; i++)
+		a[i]=i*2;
+
+	for (i=0; i<20; i++)
+		printf ("a[%d]=%d\n", i, a[i]);
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{Компилируем:}{Let's compile:}
+
+\lstinputlisting{arrays/13_2_msvc.asm}
+
+\IFRU{Однако, ничего особенного, просто два цикла, один заполняет цикл, второй печатает его содержимое. 
+Команда \TT{shl ecx, 1} используется для умножения \ECX на 2, об этом ниже~\ref{SHR}.}
+{Nothing very special, just two loops: first is filling loop and second is printing loop.
+\TT{shl ecx, 1} instruction is used for \ECX value multiplication by 2, more about below~\ref{SHR}.}
+
+\IFRU{Под массив выделено в стеке 80 байт, это 20 элементов по 4 байта.}
+{80 bytes are allocated in stack for array, that's 20 elements of 4 bytes.}
+
+\IFRU{То что делает GCC 4.4.1:}{Here is what GCC 4.4.1 does:}
+
+\lstinputlisting{arrays/13_2_gcc.asm}
+
+\subsection{\IFRU{Переполнение буфера}{Buffer overflow}}
+\label{subsec:bufferoverflow}
+
+\IFRU{Итак, индексация массива это просто \IT{массив[индекс]}. 
+Если вы присмотритесь к коду, в цикле печати значений массива через \printf вы 
+не увидите проверок индекса, \IT{меньше ли он двадцати?} 
+А что будет если он будет больше двадцати? 
+Эта одна из особенностей \CCpp, за которую их, собственно, и ругают.}
+{So, array indexing is just \IT{array[index]}.
+If you study generated code closely, you'll probably note missing index bounds checking,
+which could check index, \IT{if it is less than 20}.
+What if index will be greater than 20?
+That's the one \CCpp feature it's often blamed for.}
+
+\IFRU{Вот код который и компилится и работает:}
+{Here is a code successfully compiling and working:}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int main() 
+{
+	int a[20];
+	int i;
+
+	for (i=0; i<20; i++)
+		a[i]=i*2;
+
+	printf ("a[100]=%d\n", a[100]);
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{Вот в это}{Compilation results} (MSVC 2010):
+
+\lstinputlisting{arrays/13_3_msvc.asm}
+
+\IFRU{У меня оно при запуске выдало вот это:}{I'm running it, and I got:}
+
+\begin{lstlisting}
+a[100]=760826203
+\end{lstlisting}
+
+\IFRU{Это просто \IT{что-то}, что волею случая лежало в стеке рядом с массивом, 
+через 400 байт от его первого элемента.}
+{It is just \IT{something}, lying in the stack near to array, 400 bytes from its first element.}
+
+\IFRU{Действительно, а как могло бы быть иначе? Компилятор мог бы встроить какой-то код, 
+каждый раз проверяющий индекс на соответствие пределам массива, как в языках программирования 
+более высокого уровня\footnote{Java, Python, итд}, что делало бы запускаемый код медленнее.}
+{Indeed, how it could be done differently? Compiler may incorporate some code, checking index value to be always
+in array's bound, like in higher-level programming languages\footnote{Java, Python, etc}, 
+but this makes running code slower.}
+
+\IFRU{Итак, мы прочитали какое-то число из стека явно \IT{нелегально}, а что если мы запишем?}
+{OK, we read some values in stack \IT{illegally}, but what if we could write something to it?}
+
+\IFRU{Вот что мы пишем:}{Here is what we will write:}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int main() 
+{
+	int a[20];
+	int i;
+
+	for (i=0; i<30; i++)
+		a[i]=i;
+
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{И вот что имеем на ассемблере:}{And what we've got:}
+
+\lstinputlisting{\IFRU{arrays/13_1_ru.asm}{arrays/13_1_en.asm}}
+
+\IFRU{Запускаете скомпилированную программу, и она падает. Немудрено. Но давайте теперь узнаем, где именно.}
+{Run compiled program and its crashing. No wonder. Let's see, where exactly it's crashing.}
+
+\IFRU{Отладчик я уже давно не использую, так как надоело для всяких мелких задач вроде подсмотреть состояние 
+регистров, запускать что-то, двигать мышью, итд. 
+Поэтому я написал очень минималистическую утилиту для себя, \IT{tracer}~\ref{tracer}, коей обхожусь.}
+{I'm not using debugger anymore, because I tired to run it each time, move mouse, etc, when I need just to
+spot some register's state at specific point.
+That's why I wrote very minimalistic tool for myself, \IT{tracer}~\ref{tracer}, which is enough for my tasks.}
+
+\IFRU{Помимо всего прочего, я могу использовать мою утилиту просто чтобы посмотреть 
+где и какое исключение произошло. 
+Итак, пробую:}
+{I can also use it just to see, where debuggee is crashed.
+So let's see:}
+
+\begin{lstlisting}
+generic tracer 0.4 (WIN32), http://conus.info/gt
+
+New process: C:\PRJ\...\1.exe, PID=7988
+EXCEPTION_ACCESS_VIOLATION: 0x15 (<symbol (0x15) is in unknown module>), ExceptionInformation[0]=8
+EAX=0x00000000 EBX=0x7EFDE000 ECX=0x0000001D EDX=0x0000001D
+ESI=0x00000000 EDI=0x00000000 EBP=0x00000014 ESP=0x0018FF48
+EIP=0x00000015
+FLAGS=PF ZF IF RF
+PID=7988|Process exit, return code -1073740791
+\end{lstlisting}
+
+\IFRU{Итак, следите внимательно за регистрами.}
+{So, please keep an eye on registers.}
+
+\IFRU{Исключение произошло по адресу 0x15. Это явно нелегальный адрес для кода ~--- по крайней мере, win32-кода! 
+Мы там как-то очутились, причем, сами того не хотели. Интересен также тот факт что в \EBP хранится 0x14, 
+а в \ECX и \EDX ~--- 0x1D.}
+{Exception occured at address 0x15. It's not legal address for code ~--- at least for win32 code!
+We trapped there somehow against our will. It's also interesting fact that \EBP register contain 0x14,
+\ECX and \EDX ~--- 0x1D.}
+
+\IFRU{И еще немного изучим разметку стека.}{Let's study stack layout more.}
+
+\IFRU{После того как управление передалось в \TT{\_main}, в стек было сохранено значение \EBP. 
+Затем, для массива + переменной \IT{i} было выделено 84 байта. Это \TT{(20+1)*sizeof(int)}. 
+\ESP сейчас указывает на переменную \TT{\_i} в локальном стеке и при исполнении следующего \TT{PUSH что-либо}, 
+\IT{что-либо} появится рядом с \TT{\_i}.}
+{After control flow was passed into \TT{\main}, \EBP register value was saved into stack.
+Then, 84 bytes was allocated for array and \IT{i} variable. That's \TT{(20+1)*sizeof(int)}.
+\ESP pointing now to \TT{\_i} variable in local stack and after execution of next \TT{PUSH something},
+\IT{something} will be appeared next to \TT{\_i}.}
+
+\IFRU{Вот так выглядит разметка стека пока управление находится внутри}
+{That's stack layout while control is inside} \TT{\_main}:
+
+\lstinputlisting{\IFRU{arrays/13_stack_ru.lst}{arrays/13_stack_en.lst}}
+
+\IFRU{Команда \TT{a[19]=чего\_нибудь} записывает последний \Tint в пределах массива (пока что!)}
+{Instruction \TT{a[19]=something} writes last \Tint in array bounds (yet!)}
+
+\IFRU{Команда \TT{a[20]=чего\_нибудь} записывает \IT{чего\_нибудь} на место где сохранено значение \EBP.}
+{Instruction \TT{a[20]=something} writes \IT{something} to the place where \EBP value is saved.}
+
+\IFRU{Обратите внимание на состояние регистров на момент падения процесса. В нашем случае, 
+в 20-й элемент записалось значение 20. 
+И вот все дело в том, что заканчиваясь, эпилог функции восстанавливал значение \EBP. 
+(20 в десятичной системе это как раз 0x14 в шестнадцетиричной). 
+Далее выполнилась инструкция \RET, которая на самом деле эквивалентна \TT{POP EIP}.}
+{Please take a look at registers state at the crash moment. In our case,
+number 20 was written to 20th element. 
+By the function ending, function epilogue restore \EBP value.
+(20 in decimal system is 0x14 in hexadecimal).
+Then, \RET instruction was executed, which is equivalent to \TT{POP EIP} instruction.}
+
+\IFRU{Инструкция \RET вытащила из стека адрес возврата (это адрес в какой-то CRT\footnote{C Run-Time}-функции, 
+которая вызвала \TT{\_main}), 
+а там было записано 21 в десятичной системе, то есть 0x15 в шестнадцетиричной. 
+И вот процессор оказался по адресу 0x15, но исполняемого кода там нет, так что случилось исключение.}
+{\RET instruction taking returning adddress from stack (that's address in some CRT\footnote{C Run-Time}-function,
+which was called \TT{\_main}),
+and 21 was stored there (0x15 in hexadecimal).
+The CPU trapped at the address 0x15, but there are no executable code, so exception was raised.}
+
+\IFRU{Добро пожаловать! Это называется}
+{Welcome! It's called} \IT{buffer overflow}\footnote{\url{http://en.wikipedia.org/wiki/Stack_buffer_overflow}}.
+
+\newcommand{\URLPHRACK}{\href{http://www.phrack.com/issues.html?issue=49&id=14}
+{Smashing The Stack For Fun And Profit}}
+
+\IFRU{Замените массив \Tint на строку (массив \Tchar), нарочно создайте слишком длинную строку, 
+просуньте её в ту программу, 
+в ту функцию, которая не проверяя длину строки скопирует её в слишком короткий буфер, 
+и вы сможете указать программе, по какому именно адресу перейти. 
+Не все так просто в реальности, конечно, но началось все с этого\footnote{Классическая статья об этом: \URLPHRACK}.}
+{Replace \Tint array by string (\Tchar array), create a long string deliberately,
+pass it to the program, to the function which is not checking string length and copies it to short buffer,
+and you'll able to point to a program an address to which it should jump.
+Not that simple in reality, but that's how it was started\footnote{Classic article about it: \URLPHRACK}.}
+
+\newcommand{\URLWPB}{\href{http://en.wikipedia.org/wiki/Buffer_overflow_protection}
+{Wikipedia: \IFRU{описания защит, которые компилятор может вставлять в код}
+{compiler-side buffer overflow protection methods}}}
+
+\IFRU{В наше время пытаются бороться с этой напастью, не взирая на халатность программистов на \CCpp. 
+В MSVC есть опции вроде\footnote{\URLWPB}:}
+{There are several methods to protect against it, regardless of \CCpp programmers' negligence.
+MSVC has options like\footnote{\URLWPB}:}
+
+\begin{verbatim}
+ /RTCs Stack Frame runtime checking
+ /GZ Enable stack checks (/RTCs)
+\end{verbatim}
+
+\IFRU{Один из методов, это в прологе функции вставлять в область локальных переменных 
+некоторое случайное значение 
+и в эпилоге функции, перед выходом, это число проверять. 
+И если проверка не прошла, то не выполнять инструкцию \RET а остановиться (или зависнуть). 
+Процесс зависнет, но это лучше чем удаленная атака на ваш хост.}
+{One of the methods is to write random value among local variables to stack at function prologue 
+and to check it in function epilogue before function exiting.
+And if value is not the same, do not execute last instruction \RET, but halt (or hang).
+Process will hang, but that's much better then remote attack to your host.}
+
+\IFRU{Попробуем то же самое в GCC 4.4.1. У нас выходит такое:}{Let's try the same code in GCC 4.4.1. We got:}
+
+\lstinputlisting{arrays/13_4_gcc.asm}
+
+\IFRU{Запуск этого в Linux выдаст:}{Running this in Linux will produce:} \TT{Segmentation fault}.
+
+\IFRU{Если запустить полученное в отладчике GDB, получим:}
+{If we run this in GDB debugger, we getting this:}
+
+\begin{lstlisting}
+(gdb) r
+Starting program: /home/dennis/RE/1 
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00000016 in ?? ()
+(gdb) info registers
+eax            0x0	0
+ecx            0xd2f96388	-755407992
+edx            0x1d	29
+ebx            0x26eff4	2551796
+esp            0xbffff4b0	0xbffff4b0
+ebp            0x15	0x15
+esi            0x0	0
+edi            0x0	0
+eip            0x16	0x16
+eflags         0x10202	[ IF RF ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+(gdb) 
+\end{lstlisting}
+
+\IFRU{Значения регистров немного другие чем в примере win32, это потому что разметка стека чуть другая.}
+{Register values are slightly different then in win32 example, 
+that's because stack layout is slightly different too.}
+
+\subsection{\IFRU{Еще немного о массивах}{One more word about arrays}}
+
+\IFRU{Теперь понятно, почему нельзя написать в исходном коде на \CCpp что-то вроде:
+\footnote{GCC способен это сделать выделяя место под массив динамически в стеке (как alloca()), 
+но это расширение не является частью стандарта}}
+{Now we understand, why it's not possible to write something like that in \CCpp code
+\footnote{GCC can actually do this by allocating array dynammically in stack (like alloca()), 
+but it's not standard langauge extension}:}
+
+\begin{lstlisting}
+void f(int size)
+{
+    int a[size];
+...
+};
+\end{lstlisting}
+
+\IFRU{Все просто потому, чтобы выделять место под массив в локальном стеке или же сегменте данных 
+(если массив глобальный), компилятору нужно знать его размер, чего он, на стадии компиляции, 
+разумеется знать не может.}
+{That's just because compiler should know exact array size to allocate place for it in local stack layout or
+in data segment (in case of global variable) on compiling stage.}
+
+\IFRU{Если вам нужен массив произвольной длины, то выделите столько, сколько нужно, через \TT{malloc()}, 
+затем обращайтесь к выделенному блоку байт как к массиву того типа, который вам нужен.}
+{If you need array of arbitrary size, allocate it by \TT{malloc()}, then access allocated memory block
+as array of variables of type you need.}
+
+\subsection{\IFRU{Многомерные массивы}{Multidimensional arrays}}
+
+\IFRU{Многомерный массив выглядит внутри так же как и линейный.}
+{Internally, multidimensional array is essentially the same thing as linear array.}
+
+\IFRU{Попробуем:}{Let's see:}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int a[10][20][30];
+
+void insert(int x, int y, int z, int value)
+{
+	a[x][y][z]=value;
+};
+\end{lstlisting}
+
+\IFRU{В итоге}{We got} (MSVC 2010):
+
+\lstinputlisting{arrays/13_5_msvc.asm}
+
+\IFRU{В принципе, ничего удивительного. В \TT{insert()} для индексирования нужного элемента массива, 
+три входных аргумента перемножаются так, чтобы представить массив трехмерным.}
+{Nothing special. For index calculation, three input arguments are multiplying 
+in such way to represent array as multidimensional.}
+
+GCC 4.4.1:
+
+\lstinputlisting{arrays/13_5_gcc.asm}
+

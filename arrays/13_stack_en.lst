@@ -1,0 +1,4 @@
+ ESP:      4 bytes for i
+ ESP+4:    80 bytes for a[20] array
+ ESP+84:   saved EBP value
+ ESP+88:   returning address

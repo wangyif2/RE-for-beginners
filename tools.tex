@@ -1,0 +1,42 @@
+﻿\chapter{\IFRU{Инструменты}{Tools}}
+
+\begin{itemize}
+
+\item
+\label{IDA}
+\IFRU{IDA как дизассемблер. Старая бесплатная версия доступна для скачивания}
+{IDA as disassembler. Older freeware version is available for downloading}: 
+\url{http://www.hex-rays.com/idapro/idadownfreeware.htm}.
+
+\item
+Microsoft Visual Studio Express\footnote{\url{http://www.microsoft.com/express/Downloads/}}:
+\IFRU{Усеченная версия Visual Studio, пригодная для простых экспериментов}{Stripped-down Visual Studio version,
+convenient for simple expreiments}.
+
+\item
+Hiew\footnote{\url{http://www.hiew.ru/}} /IFRU{для мелкой модификации кода в исполняемых файлах}
+{for small modifications of code in binary files}.
+\end{itemize}
+
+\subsection{\IFRU{Отладчик}{Debugger}}
+
+\label{tracer}
+\IT{tracer}\footnote{\url{http://conus.info/gt/}} \IFRU{вместо отладчика}{instead of debugger}.
+
+\IFRU{Со временем я отказался использовать отладчик, потому что все что мне нужно от него: это иногда подсмотреть 
+какие-либо аргументы какой-либо функции во время исполнения или состояние регистров в определенном месте. 
+Каждый раз загружать отладчик для этого это слишком, поэтому я написал очень простую утилиту \IT{tracer}. 
+Она консольная, запускается из командной строки, позволяет перехватывать исполнение функций, 
+ставить брякпоинты на произвольные места, смотреть состояние регистров, модифицировать их, и так далее.}
+{I stopped to use debugger eventually, because all I need from it is to spot some function's arguments while
+execution, or registers' state at some point.
+To load debugger each time is too much, so I wrote a small utility \IT{tracer}.
+It has console-interface, working from command-line, allow to intercept function execution,
+set breakpoints at arbitrary places, spot registers' state, modify it, etc.}
+
+\IFRU{Но для учебы, очень полезно трассировать код руками в отладчике, наблюдать как меняются значения регистров 
+(например, как минимум классический SoftICE, OllyDbg, WinDbg подсвечивают измененные регистры), 
+флагов, данные, менять их самому, смотреть реакцию, итд.}
+{However, as for learning, it's highly advisable to trace code in debugger manually, watch how register's state
+changing (for example, classic SoftICE, OllyDbg, WinDbg highlighting changed registers), flags, data, change them
+manually, watch reaction, etc.}

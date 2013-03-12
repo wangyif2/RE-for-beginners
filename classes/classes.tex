@@ -1,0 +1,217 @@
+﻿% done
+
+\section{\IFRU{Классы в Си++}{C++ classes}}
+
+\IFRU{Я преднамеренно расположил описание классов здесь сразу за структурами, 
+потому что внутреннее представление классов в Си++ почти такое же как и представление структур.}
+{I placed a C++ classes description here intentionally after structures description,
+because internally, C++ classes representation is almost the same as structures representation.}
+
+\IFRU{Давайте попробуем простой пример с парой переменных, парой конструкторов и одним методом:}
+{Let's try an example with two variables, couple of constructors and one method:}
+
+\lstinputlisting{classes/16_1.cpp}
+
+\IFRU{Вот как выглядит \main на ассемблере:}{Here is how \main function looks like translated into assembler:}
+
+\lstinputlisting{classes/16_1_msvc.asm}
+
+\IFRU{Вот что происходит. 
+Под каждый экземпляр класса \IT{c} выделяется по 8 байт, столько же, сколько нужно 
+для хранения двух переменных.}
+{So what's going on.
+For each object (instance of class \IT{c}) 8 bytes allocated, that's exactly size of 2 variables storage.}
+
+\IFRU{Для \IT{c1} вызывается конструктор по умолчанию без аргументов \TT{??0c@@QAE@XZ}. 
+Для \IT{c2} вызывается другой конструктор \TT{??0c@@QAE@HH@Z} и передаются два числа в качестве аргументов.}
+{For \IT{c1} a default argumentless constructor \TT{??0c@@QAE@XZ} is called.
+For \IT{c2} another constructor \TT{??0c@@QAE@HH@Z} is called and two numbers are passed as arguments.}
+
+\IFRU{А указатель на объект (\IT{this} в терминологии Си++) передается в регистре \ECX. 
+Это называется thiscall~\ref{thiscall} ~--- метод передачи указателя на объект.}
+{A pointer to object (\IT{this} in C++ terminology) is passed in \ECX register.
+This is called thiscall~\ref{thiscall} ~--- a pointer to object passing method.}
+
+\IFRU{В данном случае, MSVC делает это через \ECX. Необходимо помнить, что это не стандартизированный метод, 
+и другие компиляторы могут делать это иначе, например через первый аргумент функции (как GCC).}
+{MSVC doing it using \ECX register. Needless to say, it's not a standardized method, other compilers could do it
+differently, for example, via first function argument (like GCC).}
+
+%\newcommand{\URLNM}{\href{http://en.wikipedia.org/wiki/Visual_C\%2B\%2B_name_mangling}{Wikipedia: Visual C++ name mangling}}
+\newcommand{\URLNM}{\href{http://en.wikipedia.org/wiki/Name_mangling}{Wikipedia: Name mangling}}
+
+\IFRU{Почему у имен функций такие странные имена? Это \IT{name mangling}\footnote{\URLNM}.}
+{Why these functions has so odd names? That's \IT{name mangling}\footnote{\URLNM}.}
+
+\IFRU{В Си++, у класса, может иметься несколько методов с одинаковыми именами 
+но аргументами разных типов ~--- это полиморфизм. 
+Ну и конечно, у разных классов могут быть методы с одинаковыми именами.}
+{C++ class may contain several methods sharing the same name but having different arguments ~--- 
+that's polymorphism.
+And of course, different classes may own methods sharing the same name.}
+
+\IFRU{\IT{Name mangling} позволяет закодировать имя класса + имя метода + типы всех аргументов метода 
+в одной ASCII-строке, которая затем используется как внутреннее имя функции. 
+Это все потому что ни линкер, ни загрузчик DLL операционной системы 
+(мангленные имена могут быть среди экспортов/импортов в DLL), 
+ничего не знают о Си++ или ООП.}
+{\IT{Name mangling} allows to encode class name + method name + all method argument types 
+in one ASCII-string, which will be used as internal function name.
+That's all because neither linker, nor DLL operation system loader (mangled names may be among 
+DLL exports as well) knows nothing about C++ or OOP.}
+
+\IFRU{Далее вызывается два раза \TT{dump()}.}{\TT{dump()} function called two times after.}
+
+\IFRU{Теперь смотрим на код в конструкторах:}{Now let's see constructors' code:}
+
+\lstinputlisting{classes/16_2_msvc.asm}
+
+\IFRU{Конструкторы это просто функции, они используют указатель на структуру в \ECX, 
+перекладывают его себе в локальную переменную, хотя это и не обязательно.}
+{Constructors are just functions, they use pointer to structure in \ECX,
+moving the pointer into own local variable, however, it's not necessary.}
+
+\IFRU{И еще метод \TT{dump()}:}{Now \TT{dump()} method:}
+
+\lstinputlisting{classes/16_3_msvc.asm}
+
+\IFRU{Все очень просто, \TT{dump()} берет указатель на структуру состоящую из двух \Tint через \ECX, 
+выдергивает оттуда две переменные и передает их в \printf.}
+{Simple enough: \TT{dump()} taking pointer to the structure containing two \Tint's in \ECX,
+takes two values from it and passing it into \printf.}
+
+\IFRU{А если скомпилировать с оптимизацией (\Ox), то будет намного меньше всего:}
+{The code is much shorter if compiled with optimization (\Ox):}
+
+\lstinputlisting{classes/16_4_msvc_Ox.asm}
+
+\IFRU{Вот и все. Единственное о чем еще нужно сказать, это о том что в функции \main, 
+когда вызывался второй конструктор с двумя аргументами, за ним не корректировался стек при помощи 
+\TT{add esp, X}. В то же время, в конце у конструктора вместо \RET имеется \TT{RET 8}.}
+{That's all. One more thing to say is that stack pointer after second constructor calling wasn't corrected
+with \TT{add esp, X}. Please also note that, constructor has \TT{ret 8} instead of \RET at the end.}
+
+\IFRU{Это потому что здесь используется thiscall~\ref{thiscall}, который, вместе с stdcall~\ref{stdcall} 
+(все это ~--- методы передачи аргументов через стек), предлагает вызываемой функции корректировать стек. 
+Инструкция \TT{ret X} сначала прибавляет \TT{X} к \ESP, затем передает управление вызывающей функции.}
+{That's all because here used thiscall~\ref{thiscall} calling convention, the method of passing values through the
+stack, which is, together with stdcall~\ref{stdcall} method, offers to correct stack to callee 
+rather then to caller.
+\TT{ret x} instruction adding \TT{X} to \ESP, then passes control to caller function.}
+
+\IFRU{См.также в соответствующем разделе о способах передачи аргументов через стек}
+{See also section about calling conventions}~\ref{sec:callingconventions}.
+
+\IFRU{Еще, кстати, нужно отметить, что именно компилятор решает, когда вызывать конструктор и деструктор ~--- 
+но это итак известно из основ языка Си++.}
+{It's also should be noted that compiler deciding when to call constructor and destructor ~--- but that's 
+we already know from C++ language basics.}
+
+\subsection{GCC}
+
+\IFRU{В GCC 4.4.1 все почти так же, за исключением некоторых различий.}
+{It's almost the same situation in GCC 4.4.1, with few exceptions.}
+
+\lstinputlisting{classes/16_5_gcc.asm}
+
+\newcommand{\URLAGNER}{\url{http://www.agner.org/optimize/calling_conventions.pdf}}
+
+\IFRU{Здесь мы видим что применяется иной \IT{name mangling} характерный для стандартов 
+GNU\footnote{Еще о name mangling разных компиляторов: \URLAGNER}. Во-вторых, указатель на экземпляр передается как первый аргумент функции ~--- конечно же, скрыто от программиста.}
+{Here we see another \IT{name mangling} style, specific to GNU\footnote{One more document about different compilers name mangling types: \URLAGNER} standards. It's also can be noted that pointer to object is passed as first function argument ~--- hiddenly from programmer, of course.}
+
+\IFRU{Это первый конструктор:}{First constructor:}
+
+\begin{lstlisting}
+                public _ZN1cC1Ev ; weak
+_ZN1cC1Ev       proc near               ; CODE XREF: main+10
+
+arg_0           = dword ptr  8
+
+                push    ebp
+                mov     ebp, esp
+                mov     eax, [ebp+arg_0]
+                mov     dword ptr [eax], 667
+                mov     eax, [ebp+arg_0]
+                mov     dword ptr [eax+4], 999
+                pop     ebp
+                retn
+_ZN1cC1Ev       endp
+\end{lstlisting}
+
+\IFRU{Он просто записывает два числа по указателю переданному в первом (и единственном) аргументе.}
+{What it does is just writes two numbers using pointer passed in first (and sole) argument.}
+
+\IFRU{Второй конструктор:}{Second constructor:}
+
+\begin{lstlisting}
+                public _ZN1cC1Eii
+_ZN1cC1Eii      proc near
+
+arg_0           = dword ptr  8
+arg_4           = dword ptr  0Ch
+arg_8           = dword ptr  10h
+
+                push    ebp
+                mov     ebp, esp
+                mov     eax, [ebp+arg_0]
+                mov     edx, [ebp+arg_4]
+                mov     [eax], edx
+                mov     eax, [ebp+arg_0]
+                mov     edx, [ebp+arg_8]
+                mov     [eax+4], edx
+                pop     ebp
+                retn
+_ZN1cC1Eii      endp
+\end{lstlisting}
+
+\IFRU{Эта функция, аналог которой мог бы выглядеть так:}{This is a function, analog of which could be looks like:}
+
+\begin{lstlisting}
+void ZN1cC1Eii (int *obj, int a, int b)
+{
+  *obj=a;
+  *(obj+1)=b;
+};
+\end{lstlisting}
+
+\IFRU{... что, в общем, предсказуемо.}{... and that's completely predictable.}
+
+\IFRU{И функция \TT{dump()}:}{Now \TT{dump()} function:}
+
+\begin{lstlisting}
+                public _ZN1c4dumpEv
+_ZN1c4dumpEv    proc near
+
+var_18          = dword ptr -18h
+var_14          = dword ptr -14h
+var_10          = dword ptr -10h
+arg_0           = dword ptr  8
+
+                push    ebp
+                mov     ebp, esp
+                sub     esp, 18h
+                mov     eax, [ebp+arg_0]
+                mov     edx, [eax+4]
+                mov     eax, [ebp+arg_0]
+                mov     eax, [eax]
+                mov     [esp+18h+var_10], edx
+                mov     [esp+18h+var_14], eax
+                mov     [esp+18h+var_18], offset aDD ; "%d; %d\n"
+                call    _printf
+                leave
+                retn
+_ZN1c4dumpEv    endp
+\end{lstlisting}
+
+\IFRU{Эта функция \IT{во внутреннем представлении} имеет один аргумент, через который передается указатель на 
+объект\footnote{экземпляр класса} (\IT{this}).}
+{This function in its \IT{internal representation} has sole argument, 
+used as pointer to the object (\IT{this}).}
+
+\IFRU{Таким образом, если брать в учет только эти простые примеры, разница между MSVC и GCC 
+в способе кодирования имен функций (\IT{name mangling}) и передаче указателя на экземпляр класса 
+(через \ECX или через первый аргумент).}
+{Thus, if to base our judgment on these simple examples, the difference between MSVC and GCC
+is style of function names encoding (\IT{name mangling}) and passing pointer to object
+(via \ECX register or via first argument).}

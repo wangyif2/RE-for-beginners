@@ -1,0 +1,179 @@
+﻿% done
+
+\section{strlen()}
+
+\IFRU{Еще немного о циклах. Часто, функция \TT{strlen()}\footnote{подсчет длины строки в Си} 
+реализуется при помощи \TT{while()}.}
+{Now let's talk about loops one more time. Often, \TT{strlen()} 
+function\footnote{counting characters in string in C language} is implemented using \TT{while()} statement.}
+\IFRU{Например, как это сделано в стандартных библиотеках MSVC:}
+{Here is how it done in MSVC standard libraries:}
+
+\begin{lstlisting}
+int strlen (const char * str)
+{
+        const char *eos = str;
+
+        while( *eos++ ) ;
+
+        return( eos - str - 1 );
+}
+\end{lstlisting}
+
+\IFRU{Итак, компилируем:}{Let's compile:}
+
+\lstinputlisting{\IFRU{strlen/10_1_msvc_ru.asm}{strlen/10_1_msvc_en.asm}}
+
+\IFRU{Здесь две новых инструкции: \MOVSX и \TEST.}
+{Two new instructions here: \MOVSX and \TEST.}
+
+\label{MOVSX}
+\IFRU{О первой: \MOVSX предназначен для того чтобы взять байт из какого-либо места в памяти и положить его, 
+в нашем случае, в регистр \EDX. 
+Но регистр \EDX ~--- 32-битный. \MOVSX означает \IT{MOV with Sign-Extent}. 
+Оставшиеся биты с 8-го по 31-й \MOVSX сделает еденицей, если исходный байт в памяти имеет знак \IT{минус}, 
+или заполнит нулями, если знак \IT{плюс}.}
+{About first: \MOVSX is intended to take byte from some place and store value in 32-bit register. 
+\MOVSX meaning \IT{MOV with Sign-Extent}. 
+Rest bits starting at 8th till 31th \MOVSX will set to 1 if source byte in memory has \IT{minus} 
+sign or to 0 if \IT{plus}.}
+
+\IFRU{И вот зачем все это.}{And here is why all this.}
+
+\IFRU{По стандарту \CCpp, тип \Tchar ~--- знаковый. Если у нас есть две переменные, одна \Tchar, а другая \Tint 
+(\Tint тоже знаковый), и если в первой переменной лежит -2 (что кодируется как 0xFE) и мы просто 
+переложим это в \Tint, 
+то там будет 0x000000FE, а это, с точки зрения \Tint, даже знакового, будет 254, но никак не -2. 
+-2 в переменной \Tint кодируется как 0xFFFFFFFE. И для того чтобы значение 0xFE из переменной типа 
+\Tchar переложить 
+в знаковый \Tint с сохранением всего, нужно узнать его знак, и затем заполнить остальные биты. 
+Это делает \MOVSX.}
+{\CCpp standard defines \Tchar type as signed. If we have two values, one is \Tchar 
+and another is \Tint, (\Tint is signed too), and if first value contain -2 (it is coded as 0xFE) 
+and we just copying this byte into \Tint container, there will be 0x000000FE, and this, 
+from the point of signed \Tint view is 254, but not -2. In signed int, -2 is coded as 0xFFFFFFFE. 
+So if we need to transfer 0xFE value from variable of \Tchar type to \Tint, 
+we need to identify its sign and extend it. That is what \MOVSX does.}
+
+\IFRU{См.также об этом раздел}
+{See also more in section} \IT{\SignedNumbersSectionName}~\ref{sec:signednumbers}.
+
+\IFRU{Хотя, конкретно здесь, компилятору врядли была особая надобность хранить значение \Tchar в регистре \EDX 
+а не его восьмибитной части, скажем, \DL. Но получилось как получилось: должно быть, register allocator
+компилятора сработал именно так.}
+{I'm not sure if compiler need to store \Tchar variable in \EDX, it could take 8-bit register part 
+(let's say \DL). But probably, compiler's register allocator works like that.}
+
+\IFRU{Позже выполняется \TT{TEST EDX, EDX}. 
+Об инструкции \TEST читайте в разделе о битовых полях~\ref{sec:bitfields}.
+Но конкретно здесь, эта инструкция просто проверяет состояние регистра \EDX на 0.}
+{Then we see \TT{TEST EDX, EDX}. 
+About \TEST instruction, read more in section about bit fields~\ref{sec:bitfields}.
+But here, this instruction just checking \EDX value, if it is equals to 0.}
+
+\IFRU{Попробуем GCC 4.4.1:}{Let's try GCC 4.4.1:}
+
+\lstinputlisting{strlen/10_3_gcc.asm}
+
+\IFRU{Результат очень похож на MSVC, вот только здесь используется \MOVZX а не \MOVSX. 
+\MOVZX означает \IT{MOV with Zero-Extent}. Эта инструкция перекладывает какое-либо значение 
+в регистр и остальное добивает нулями. 
+Фактически, преимущество этой инструкции только в том, что она позволяет 
+заменить две инструкции сразу: \TT{xor eax, eax / mov al, [...]}.}
+{The result almost the same as MSVC did, but here we see \MOVZX isntead of \MOVSX. 
+\MOVZX mean \IT{MOV with Zero-Extent}. 
+This instruction place 8-bit or 16-bit value into 32-bit register and set the rest bits to zero. 
+In fact, this instruction is handy only because it is able to replace two instructions at once: 
+\TT{xor eax, eax / mov al, [...]}.}
+
+\IFRU{С другой стороны, нам очевидно, что здесь можно было бы написать вот так: 
+\TT{mov al, byte ptr [eax] / test al, al} ~--- это тоже самое, хотя старшие биты \EAX будут "замусорены". 
+Но, будем считать, что это погрешность компилятора ~--- он не смог сделать код более экономным или более понятным. 
+Строго говоря, компилятор вообще не нацелен на то чтобы генерировать понятный (для человека) код.}
+{On other hand, it is obvious to us that compiler could produce that code: 
+\TT{mov al, byte ptr [eax] / test al, al} ~--- it is almost the same, however, 
+highest \EAX register bits will contain random noise. 
+But let's think it is compiler's drawback ~--- it can't produce more understandable code. 
+Strictly speaking, compiler is not obliged to emit understandable (to humans) code at all.}
+
+\IFRU{Следующая новая инструкция для нас ~--- \SETNZ. В данном случае, если в \AL был не ноль, 
+то \TT{test al, al} выставит флаг \ZF в 0, а \SETNZ, если \TT{ZF==0} 
+(\IT{NZ} значит \IT{not zero}) выставит еденицу в \AL. 
+Смысл этой процедуры в том, что, если говорить человеческим языком, 
+\IT{если AL не ноль, то выполнить переход на} \TT{loc\_80483F0}.
+Компилятор выдал немного избыточный код, но не будем забывать что оптимизация выключена.}
+{Next new instruction for us is \SETNZ. Here, if \AL contain not zero, \TT{test al, al} 
+will set zero to \ZF flag, but \SETNZ, if \TT{ZF==0} (\IT{NZ} mean \IT{not zero}) will set 1 to \AL. 
+Speaking in natural language, \IT{if AL is not zero, let's jump to loc\_80483F0}. 
+Compiler emitted slightly redundant code, but let's not forget that optimization is turned off.}
+
+\IFRU{Теперь скомпилируем все то же самое в MSVC 2010, но с включенной оптимизацией (\Ox)}
+{Now let's compile all this in MSVC 2010, with optimization turned on (\Ox)}:
+
+\lstinputlisting{strlen/10_2_en.asm}
+
+\IFRU{Здесь все попроще стало. Но следует отметить, что компилятор обычно может так хорошо использовать регистры 
+только на не очень больших функций с не очень большим количеством локальных переменных.}
+{Now it's all simpler. But it is needless to say that compiler could use registers such efficiently 
+only in small functions with small number of local variables.}
+
+\INC/\DEC ~--- \IFRU{это инструкции инкремента-декремента, попросту говоря: 
+увеличить на еденицу или уменьшить.}
+{are increment/decrement instruction, in other words: add 1 to variable or subtract.}
+
+\IFRU{Попробуем GCC 4.4.1 с влюченной оптимизацией (ключ \TT{-O3}):}
+{Let's check GCC 4.4.1 with optimization turned on (\TT{-O3} key):}
+
+\lstinputlisting{strlen/10_3_gcc_O3.asm}
+
+\IFRU{Здесь GCC не очень отстает от MSVC за исключением наличия \MOVZX.} 
+{Here GCC is almost the same as MSVC, except of \MOVZX presence.}
+
+\IFRU
+{Впрочем, только кроме того что почему-то используется \MOVZX, который явно можно заменить на}
+{However, \MOVZX could be replaced here to} \TT{mov dl, byte ptr [eax]}.
+
+\IFRU{Но, возможно, компилятору GCC просто проще помнить что у него под переменную типа \Tchar отведен целый 
+32-битный регистр и быть уверенным в том что старшие биты регистра не будут замусорены.}
+{Probably, it is simpler for GCC compiler's code generator to \IT{remember} that whole register 
+is allocated for \Tchar variable and it can be sure that highest bits will not contain noise 
+at any point.}
+
+\IFRU{Далее мы видим новую для нас инструкцию \NOT. Эта инструкция инвертирует все биты в операнде. 
+Можно сказать что здесь это синонимично инструкции \TT{XOR ECX, 0ffffffffh}. 
+\NOT и следующая за ней инструкция \ADD вычисляют разницу указателей и отнимают от результата единицу. 
+Только происходит это слегка по-другому. Сначала \ECX, где хранится указатель на \IT{str}, 
+инвертируется и от него отнимается единица.}
+{After, we also see new instruction \NOT. This instruction inverts all bits in operand. 
+It can be said, it is synonym to \TT{XOR ECX, 0ffffffffh} instruction. 
+\NOT and following \ADD calculating pointer difference and subtracting 1. 
+At the beginning \ECX, where pointer to str is stored, inverted and 1 is subtracted from it.}
+
+\IFRU{См. также раздел:}{See also:} \SignedNumbersSectionName~\ref{sec:signednumbers}.
+
+\IFRU{Иными словами, в конце функции, после цикла, происходит примерно следующее:} 
+{In other words, at the end of function, just after loop body, these operations are executed:}
+
+\begin{lstlisting}
+ecx=str;
+eax=eos;
+ecx=(-ecx)-1; 
+eax=eax+ecx
+return eax
+\end{lstlisting}
+
+\IFRU{... что эквивалентно:}{... and this is equivalent to:}
+
+\begin{lstlisting}
+ecx=str;
+eax=eos;
+eax=eax-ecx;
+eax=eax-1;
+return eax
+\end{lstlisting}
+
+\IFRU
+{Но почему GCC решил что так будет лучше? Снова не берусь сказать. Но я не сомневаюсь, 
+что эти оба варианта работают примерно равноценно в плане эффективности и скорости.}
+{Why GCC decided it would be better? I cannot be sure. 
+But I'm assure that both variants are equivalent in efficiency sense.}

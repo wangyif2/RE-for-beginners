@@ -1,0 +1,135 @@
+﻿% done
+
+\section{\IFRU{Передача параметров через стек}{Passing arguments via stack}}
+
+\IFRU
+{Как мы уже успели заметить, вызывающая функция передает аргументы для вызываемой через стек. 
+А как вызываемая функция имеет к ним доступ?}
+{Now we figured out that caller function passing arguments to callee via stack. 
+But how callee\footnote{function being called} access them?}
+
+\begin{lstlisting}
+#include <stdio.h>
+
+int f (int a, int b, int c)
+{
+	return a*b+c;
+};
+
+int main() 
+{
+	printf ("%d\n", f(1, 2, 3));
+	return 0;
+};
+\end{lstlisting}
+
+\IFRU{Имеем в итоге}{What we have after compilation} (MSVC 2010 Express):
+
+\begin{lstlisting}
+_TEXT	SEGMENT
+_a$ = 8							; size = 4
+_b$ = 12						; size = 4
+_c$ = 16						; size = 4
+_f	PROC
+; File c:\...\1.c
+; Line 4
+	push	ebp
+	mov	ebp, esp
+; Line 5
+	mov	eax, DWORD PTR _a$[ebp]
+	imul	eax, DWORD PTR _b$[ebp]
+	add	eax, DWORD PTR _c$[ebp]
+; Line 6
+	pop	ebp
+	ret	0
+_f	ENDP
+
+_main	PROC
+; Line 9
+	push	ebp
+	mov	ebp, esp
+; Line 10
+	push	3
+	push	2
+	push	1
+	call	_f
+	add	esp, 12					; 0000000cH
+	push	eax
+	push	OFFSET $SG2463 ; '%d', 0aH, 00H
+	call	_printf
+	add	esp, 8
+; Line 11
+	xor	eax, eax
+; Line 12
+	pop	ebp
+	ret	0
+_main	ENDP
+\end{lstlisting}
+
+\IFRU{Итак, здесь видно: в функции \TT{\_main} заталкиваются три числа в стек и вызывается 
+функиця \TT{f(int,int,int)}.}
+{What we see is that 3 numbers are pushing to stack in function \TT{\_main} and \TT{f(int,int,int)} is called then.}
+\IFRU{Внутри \TT{f()}, доступ к аргументам, также как и к локальным переменным, происходит через макросы: 
+\TT{\_a\$ = 8}, но разница в том, что эти смещения со знаком \IT{плюс}, 
+таким образом если прибавить макрос \TT{\_a\$} к указателю на \EBP, то адресуется \IT{внешняя} 
+часть стека относительно \EBP.}
+{Argument access inside \TT{f()} is organized with help of macros like: \TT{\_a\$ = 8}, 
+in the same way as local variables accessed, but difference in that these offsets are positive 
+(addressed with \IT{plus} sign).
+So, adding \TT{\_a\$} macro to \EBP register value, \IT{outer} side of stack frame is addressed.}
+
+\IFRU{Далее все более-менее просто: значение a кладется в \EAX. Далее \EAX умножается при помощи инструкции \IMUL на то что лежит в \TT{\_b}, так в \EAX остается произведение\footnote{результат умножения} этих двух значений.}
+{Then \TT{a} value is stored into \EAX. After \IMUL instruction execution, \EAX value is 
+product\footnote{result of multiplication} of \EAX and what is stored in \TT{\_b}.}
+\IFRU{Далее к регистру \EAX прибавляется то что лежит в \TT{\_c}.}{After \IMUL execution, \ADD is 
+summing \EAX and what is stored in \TT{\_c}.}
+\IFRU
+{Значение из \EAX никуда не нужно перекладывать, оно уже лежит где надо. Возвращаем управление вызываемой 
+функции ~--- она возьмет значение из \EAX и отправит его в \printf.}
+{Value in \EAX is not needed to be moved: it is already in place it need. Now return to caller ~--- it 
+will take value from \EAX and used it as \printf argument.}
+\IFRU{Скомпилируем то же в GCC 4.4.1 и посмотрим результат в IDA:}{Let's compile the same in GCC 4.4.1:}
+
+\begin{lstlisting}
+                public f
+f               proc near               ; CODE XREF: main+20
+
+arg_0           = dword ptr  8
+arg_4           = dword ptr  0Ch
+arg_8           = dword ptr  10h
+
+                push    ebp
+                mov     ebp, esp
+                mov     eax, [ebp+arg_0]
+                imul    eax, [ebp+arg_4]
+                add     eax, [ebp+arg_8]
+                pop     ebp
+                retn
+f               endp
+
+                public main
+main            proc near               ; DATA XREF: _start+17
+
+var_10          = dword ptr -10h
+var_C           = dword ptr -0Ch
+var_8           = dword ptr -8
+
+                push    ebp
+                mov     ebp, esp
+                and     esp, 0FFFFFFF0h
+                sub     esp, 10h        ; char *
+                mov     [esp+10h+var_8], 3
+                mov     [esp+10h+var_C], 2
+                mov     [esp+10h+var_10], 1
+                call    f
+                mov     edx, offset aD  ; "%d\n"
+                mov     [esp+10h+var_C], eax
+                mov     [esp+10h+var_10], edx
+                call    _printf
+                mov     eax, 0
+                leave
+                retn
+main            endp
+\end{lstlisting}
+
+\IFRU{Практически то же самое, если не считать мелких отличий описанных раннее.}{Almost the same result.}

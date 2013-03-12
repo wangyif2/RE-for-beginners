@@ -1,0 +1,112 @@
+﻿% done
+
+\section{\IFRU{printf() с несколькими агрументами}{
+printf() with several arguments}}
+
+\IFRU{Попробуем теперь немного расширить пример \IT{Hello, world!}~\ref{sec:helloworld}, 
+написав в теле функции \main:}
+{Now let's extend \IT{Hello, world!}~\ref{sec:helloworld} example, replacing \printf in 
+\main function body by this:}
+
+\begin{lstlisting}
+printf("a=%d; b=%d; c=%d", 1, 2, 3);
+\end{lstlisting}
+
+\IFRU{Компилируем при помощи MSVC 2010 Express, и в итоге получим:}
+{Let's compile it by MSVC 2010 and we got:}
+
+\begin{lstlisting}
+$SG3830	DB	'a=%d; b=%d; c=%d', 00H
+
+...
+
+	push	3
+	push	2
+	push	1
+	push	OFFSET $SG3830
+	call	_printf
+	add	esp, 16					; 00000010H
+\end{lstlisting}
+
+\IFRU{Все почти то же, за исключением того, что теперь видно, что аргументы для \printf заталкиваются в стек в обратном порядке: самый первый аргумент заталкивается последним.}
+{Almost the same, but now we can see that \printf arguments are pushing into stack in reverse order: and the first argument is pushing in as the last one.}
+
+\IFRU
+{Всего 4 аргумента. 4*4 = 16 ~--- именно 16 байт занимают в стеке указатель на строку плюс еще 
+3 числа типа \Tint.}
+{Here 4 arguments. 4*4 = 16 ~--- exactly 16 byte they occupy in stack: 32-bit pointer to string and 
+3 number of \Tint type.}
+
+\IFRU{Переменные типа \Tint в 32-битной системе, как известно, имеет ширину 32 бита.}
+{Variables of \Tint type in 32-bit environment has 32-bit width.}
+
+\IFRU{Когда при помощи инструкции \TT{ADD ESP, X} корректируется указатель стека \ESP 
+после вызова какой-либо функции, зачастую можно сделать вывод о том, сколько аргументов 
+у вызываемой функции было, разделив X на 4.}
+{When stack pointer (\ESP register) is corrected by \TT{ADD ESP, X} instruction after some function 
+call, often, the number of function arguments could be deduced here: just divide X by 4.}
+
+\IFRU{Конечно, это относится только к cdecl-методу передачи аргументов через стек.}
+{Of course, this is related only to \IT{cdecl} calling convention.}
+
+\IFRU{См.также в соответствующем разделе о способах передачи аргументов через стек}
+{See also section about calling conventions}~\ref{sec:callingconventions}.
+
+\IFRU{Иногда бывает так, что подряд идут несколько вызовов разных функций, 
+но стек корректируется только один раз, после последнего вызова:}
+{It is also possible for compiler to merge several \TT{ADD ESP, X} instructions into one, after last call:}
+
+\begin{lstlisting}
+push a1
+push a2
+call ...
+...
+push a1
+call ...
+...
+push a1
+push a2
+push a3
+call ...
+add esp, 24
+\end{lstlisting}
+
+\IFRU{Скомпилируем то же самое в Linux при помощи GCC 4.4.1 и посмотрим в \IDA что вышло:}
+{Now let's compile the same in Linux by GCC 4.4.1 and take a look in \IDA what we got:}
+
+\begin{lstlisting}
+main            proc near
+
+var_10          = dword ptr -10h
+var_C           = dword ptr -0Ch
+var_8           = dword ptr -8
+var_4           = dword ptr -4
+
+                push    ebp
+                mov     ebp, esp
+                and     esp, 0FFFFFFF0h
+                sub     esp, 10h
+                mov     eax, offset aADBDCD ; "a=%d; b=%d; c=%d"
+                mov     [esp+10h+var_4], 3
+                mov     [esp+10h+var_8], 2
+                mov     [esp+10h+var_C], 1
+                mov     [esp+10h+var_10], eax
+                call    _printf
+                mov     eax, 0
+                leave
+                retn
+main            endp
+\end{lstlisting}
+
+\IFRU{Можно сказать, что этот короткий код созданный GCC отличается от кода MSVC только способом помещения 
+значений в стек.
+Здесь GCC снова работает со стеком напрямую без \PUSH/\POP.}
+{It can be said, the difference between code by MSVC and GCC is only in method of placing arguments into stack. 
+Here GCC working directly with stack without \PUSH/\POP.}
+
+\IFRU{Кстати, эта разница неплохо иллюстрирует тот важный момент, что процессору, в общем, все равно как будут 
+передаваться параметры функций. Можно создать гипотетический компилятор, который будет передавать их при 
+помощи указателя на структуру с параметрами, не пользуясь стеком вообще.}
+{By the way, this difference is a good illustration that CPU is not aware of how arguments is passed to functions. 
+It is also possible to create hypothetical compiler which is able to pass arguments 
+via some special structure not using stack at all.}
