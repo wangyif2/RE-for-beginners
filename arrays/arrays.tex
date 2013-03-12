@@ -171,7 +171,14 @@ Then, 84 bytes was allocated for array and \IT{i} variable. That's \TT{(20+1)*si
 \IFRU{Вот так выглядит разметка стека пока управление находится внутри}
 {That's stack layout while control is inside} \TT{\_main}:
 
-\lstinputlisting{\IFRU{arrays/13_stack_ru.lst}{arrays/13_stack_en.lst}}
+\begin{tabular}{ | l | l | }
+\hline
+  \TT{ESP}    & \IFRU{4 байта для \IT{i}}{4 bytes for \IT{i}} \\
+  \TT{ESP+4}  & \IFRU{80 байт для массива \TT{a[20]}}{80 bytes for \TT{a[20]} array} \\
+  \TT{ESP+84} & \IFRU{сохраненное значение \EBP}{saved \EBP value} \\
+  \TT{ESP+88} & \IFRU{адрес возврата}{returning address} \\
+\hline
+\end{tabular}
 
 \IFRU{Команда \TT{a[19]=чего\_нибудь} записывает последний \Tint в пределах массива (пока что!)}
 {Instruction \TT{a[19]=something} writes last \Tint in array bounds (yet!)}
