@@ -173,8 +173,10 @@ this instruction aligning \ESP value on 16-byte border, resulting some values in
 \IFRU{Это происходит потому что количество выделяемого места в локальном стеке тоже выровнено по 
 16-байтной границе.}{This is because the size of allocated stack is also aligned on 16-byte border.}
 
-\IFRU{Адрес строки (или указатель на строку) затем записывается прямо в стек без помощи инструкции \PUSH.}
-{String address (or pointer to string) is then writing directly into stack space without \PUSH instruction use.}
+\IFRU{Адрес строки (или указатель на строку) затем записывается прямо в стек без помощи инструкции \PUSH.
+\IT{var\_10} по совместительству ~--- и локальная переменная и одновременно аргумент для \printf{}. Подробнее об этом будет ниже.}
+{String address (or pointer to string) is then writing directly into stack space without \PUSH instruction use.
+\IT{var\_10} ~--- is local variable, but also argument for \printf(). Read below about it.}
 
 \IFRU{Затем вызывается \printf.}{Then \printf function is called.}
 

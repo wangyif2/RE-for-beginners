@@ -330,11 +330,11 @@ Two least significant bits are dropped.
 In fact, these two dropped bits ~--- division operation remainder.}
 
 \IFRU{Для того, чтобы это проще понять, представьте себе десятичную систему счисления и число 23. 
-23 можно разделить на 10 просто выкинув последний разряд (3, это остаток от деления). 
+23 можно разделить на 10 просто выкинув последний разряд (3 ~--- это остаток от деления). 
 После этой операции останется 2 как частное
 \footnote{результат деления}.}
 {It can be easily understood if to imagine decimal numeral system and number 23.
-23 can be easily divided by 10 just by dropping last digit (3 will be division remainder). 
+23 can be easily divided by 10 just by dropping last digit (3 ~--- is division remainder). 
 2 is leaving after operation as a quotient
 \footnote{division result}.}
 
@@ -367,12 +367,12 @@ instead of usual one.}
 {Let's compile it in MSVC with optimization (\Ox).
 For the sake of brevity, only \TT{crc()} function is listed here, with my comments.}
 
-\lstinputlisting{bitfields/14_2_en.asm}
+\lstinputlisting{\IFRU{bitfields/14_2_ru.asm}{bitfields/14_2_en.asm}}
 
 \IFRU{Попробуем то же самое в GCC 4.4.1 с опцией \TT{-O3}:}
 {Let's try the same in GCC 4.4.1 with \TT{-O3} option:}
 
-\lstinputlisting{bitfields/14_CRC_gcc_O3_en.asm}
+\lstinputlisting{\IFRU{bitfields/14_CRC_gcc_O3_ru.asm}{bitfields/14_CRC_gcc_O3_en.asm}}
 
 \IFRU{GCC немного выровнял начало тела цикла по 8-байтной границе, для этого добавил 
 \NOP и \TT{lea esi, [esi+0]} (что тоже \IT{холостая операция}). 
