@@ -43,12 +43,12 @@ int main()
 \subsection{\IFRU{Переполнение буфера}{Buffer overflow}}
 \label{subsec:bufferoverflow}
 
-\IFRU{Итак, индексация массива это просто \IT{массив[индекс]}. 
+\IFRU{Итак, индексация массива это просто \IT{массив\lbrack{}индекс\rbrack}.  % TODO как-то плохо отображаются []
 Если вы присмотритесь к коду, в цикле печати значений массива через \printf вы 
 не увидите проверок индекса, \IT{меньше ли он двадцати?} 
 А что будет если он будет больше двадцати? 
 Эта одна из особенностей \CCpp, за которую их, собственно, и ругают.}
-{So, array indexing is just \IT{array[index]}.
+{So, array indexing is just \IT{array\lbrack{}index\rbrack}.
 If you study generated code closely, you'll probably note missing index bounds checking,
 which could check index, \IT{if it is less than 20}.
 What if index will be greater than 20?
