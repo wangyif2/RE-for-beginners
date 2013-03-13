@@ -1,0 +1,29 @@
+.text:6440503C                 cmp     [ebp+var_10], ebx
+.text:6440503F                 jnz     exit ; bypass drawing
+
+; add strings "For maximum data security delete" / "the setting(s) as soon as possible !":
+
+.text:64405045                 push    offset aForMaximumData ; "\nFor maximum data security delete\nthe s"...
+.text:6440504A                 call    ds:mfc90_945 ; ATL::CStringT::operator+=(char const *)
+.text:64405050                 xor     edi, edi
+.text:64405052                 push    edi             ; fWinIni
+.text:64405053                 lea     eax, [ebp+pvParam]
+.text:64405056                 push    eax             ; pvParam
+.text:64405057                 push    edi             ; uiParam
+.text:64405058                 push    30h             ; uiAction
+.text:6440505A                 call    ds:SystemParametersInfoA
+.text:64405060                 mov     eax, [ebp+var_34]
+.text:64405063                 cmp     eax, 1600
+.text:64405068                 jle     short loc_64405072
+.text:6440506A                 cdq
+.text:6440506B                 sub     eax, edx
+.text:6440506D                 sar     eax, 1
+.text:6440506F                 mov     [ebp+var_34], eax
+.text:64405072
+.text:64405072 loc_64405072:
+
+start drawing:
+
+.text:64405072                 push    edi             ; hWnd
+.text:64405073                 mov     [ebp+cy], 0A0h
+.text:6440507A                 call    ds:GetDC
