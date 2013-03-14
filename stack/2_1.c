@@ -1,3 +1,6 @@
+#include <malloc.h>
+#include <stdio.h>
+
 void f()
 {
     char *buf=(char*)alloca (600);
