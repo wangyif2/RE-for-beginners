@@ -57,17 +57,19 @@ Probably, there could be other ways, but in x86 it is so.}
 to have an access to local variables and function arguments via \TT{EBP+offset}.}
 
 \IFRU
-{Можно было бы использовать \ESP, но он во время исполнения функции постоянно меняется.}
-{It is also possible to use \ESP, but it's often changing and not very handy.}
+{Можно было бы использовать \ESP, но он во время исполнения функции постоянно меняется. 
+Так что можно сказать что \EBP это замороженное состояние \ESP на момент начала исполнения функции.}
+{It is also possible to use \ESP, but it's often changing and not very handy.
+So it can be said, \EBP is frozen state of \ESP at the moment of function execution start.}
 
 \IFRU
 {У функции \scanf в нашем примере два аргумента.}{Function \scanf in our example has two arguments.}
 
 \IFRU
-{Первый ~--- указатель на строку содержащую \TT{"\%d"} и второй ~--- адрес переменной \TT{x}.} 
-{First is pointer to the string containing \TT{"\%d"} and second ~--- address of variable \TT{x}.} 
+{Первый ~--- указатель на строку содержащую \TT{``\%d''} и второй ~--- адрес переменной \TT{x}.} 
+{First is pointer to the string containing \TT{``\%d''} and second ~--- address of variable \TT{x}.} 
 
-\IFRU{Вначале адрес \TT{x} помещается в регистр \EAX при помощи инструкции \TT{lea eax, DWORD PTR \_x\$[ebp]}. 
+\IFRU{Вначале адрес \TT{x} помещается в регистр \EAX при помощи инструкции \TT{lea eax, DWORD PTR \_x\$[ebp]}.}
 {First of all, address of \TT{x} is placed into \EAX register by \TT{lea eax, DWORD PTR \_x\$[ebp]} instruction}
 
 \IFRU{Инструкция \LEA означает \IT{load effective address}, но со временем она изменила свою функцию}
@@ -86,13 +88,12 @@ to have an access to local variables and function arguments via \TT{EBP+offset}.
 And then value in \EAX is pushing into stack and \scanf is called.}
 
 \IFRU{После этого вызывается \printf. Первый аргумент вызова которого, строка:} 
-{After that, \printf is called. First argument is pointer to string: }
-\TT{"You entered \%d...\textbackslash{}n"}.}
+{After that, \printf is called. First argument is pointer to string:} \TT{``You entered \%d...\textbackslash{}n''}.
 
 \IFRU{Второй аргумент: \TT{mov ecx, [ebp-4]}, эта инструкция кладет в \ECX не адрес переменной \TT{x}, 
 а его значение, что там сейчас находится.}
 {Second argument is prepared as: \TT{mov ecx, [ebp-4]},
-this instruction placing to \ECX not address of \TT(x) variable but its contents.}
+this instruction placing to \ECX not address of \TT{x} variable but its contents.}
 
 \IFRU{Далее значение \ECX заталкивается в стек и вызывается последний \printf.}
 {After, \ECX value is placing into stack and last \printf called.}
@@ -122,9 +123,10 @@ statements starting with \IT{\%}: then effect of these two functions will be dif
 {Видимо потому, что просто проталкивает символы в stdout не сравнивая каждый со знаком процента.}
 {It working faster because just passes characters to stdout not comparing each with \IT{\%} symbol.}
 
-\IFRU
-{Почему \scanf переименовали в \TT{\_\_\_isoc99\_scanf}, я честно говоря, пока не знаю.}
-{Why \scanf is renamed to \TT{\_\_\_isoc99\_scanf}, I do not know yet.}
+% TODO: rewrite
+%\IFRU
+%{Почему \scanf переименовали в \TT{\_\_\_isoc99\_scanf}, я честно говоря, пока не знаю.}
+%{Why \scanf is renamed to \TT{\_\_\_isoc99\_scanf}, I do not know yet.}
 
 \IFRU{Далее все как и прежде ~--- параметры заталкиваются через стек при помощи \MOV.}
 {As before ~--- arguments are placed into stack by \MOV instruction.}
@@ -133,9 +135,9 @@ statements starting with \IT{\%}: then effect of these two functions will be dif
 
 \IFRU
 {А что если переменная \TT{x} из предыдущего примера будет глобальной переменной а не локальной? 
-Ну, тогда к ней смогут обращаться из любого другого места, а не только из тела функции. 
+Тогда к ней смогут обращаться из любого другого места, а не только из тела функции. 
 Это снова не очень хорошая практика программирования, но ради примера мы можем себе это позволить.}
-{What if \TT{x} variable from previous example will not local but global variable? 
+{What if \TT{x} variable from previous example will not be local but global variable? 
 Then it will be accessible from any place but not only from function body. 
 It is not very good programming practice, but for the sake of experiment we could do this.}
 
@@ -175,7 +177,7 @@ _x	DD	0aH
 \end{lstlisting}
 
 \IFRU{Здесь уже по месту этой переменной записано \TT{0xA} с типом DD (dword = 32 бита).}
-{Here we see value 0xA typed as DWORD (DD meaning DWORD = 32 bit).}
+{Here we see value 0xA of DWORD type (DD meaning DWORD = 32 bit).}
 
 \IFRU{Если вы откроете скомпилированный .exe-файл в \IDA, то увидите что \IT{x} 
 находится аккурат в начале сегмента \TT{\_DATA}, после этой переменной будут текстовые строки.}
@@ -236,10 +238,10 @@ this is segment with such attributes:}
 \subsection{\IFRU{Проверка результата scanf()}{scanf() result checking}}
 
 \IFRU
-{Как я уже говорил, использовать \scanf в наше время это слегка старомодно. 
+{Как я уже писал, использовать \scanf в наше время это слегка старомодно. 
 Но если уж жизнь заставила этим заниматься, нужно хотя бы проверять, сработал ли \scanf 
 правильно или пользователь ввел вместо числа что-то другое, что \scanf не смог трактовать как число.}
-{As I said before, it is not very clever to use \scanf today. 
+{As I wrote before, it is not very clever to use \scanf today. 
 But if we have to, we need at least check if \scanf finished correctly without error.}
 
 \begin{lstlisting}
@@ -264,8 +266,8 @@ int main()
 {In our case, if everything went fine and user entered some number, 
 \scanf will return 1 or 0 or EOF in case of error.}
 
-\IFRU{Мы добавили код, который проверяет результат \scanf и в случае ошибки, говорит пользователю что-то другое.}
-{We added C code for \scanf result checking and printing error message in case of error.}
+\IFRU{Я добавили код, который проверяет результат \scanf и в случае ошибки, говорит пользователю что-то другое.}
+{I added C code for \scanf result checking and printing error message in case of error.}
 
 \IFRU{Вот, что выходит на ассемблере}{What we got in assembler} (MSVC 2010):
 
@@ -316,9 +318,9 @@ in other words, we compare value in \EAX with 1.}
 address mentioned in operand of \JNE, in our case it is \TT{\$LN2@main}.}
 \IFRU
 {Передав управление по этому адресу, процессор как раз начнет исполнять вызов \printf с 
-аргументом \TT{"What you entered? Huh?"}.}
+аргументом \TT{``What you entered? Huh?''}.}
 {Passing control to this address, microprocesor will execute function \printf 
-with argument \TT{"What you entered? Huh?"}.}
+with argument \TT{``What you entered? Huh?''}.}
 \IFRU
 {Но если все нормально, перехода не случится, и исполнится другой \printf с двумя аргументами: 
 \TT{'You entered \%d...'} и значением переменной \TT{x}.}
@@ -348,10 +350,10 @@ processor flags\footnote{About x86 flags, see also: \url{http://en.wikipedia.org
 \label{CMPandSUB}
 \IFRU{Но на самом деле, как это не парадоксально поначалу звучит, \CMP это почти то же самое что и 
 инструкция \SUB, которая отнимает числа одно от другого.}
-{But in fact, this could be perceived paradoxial, but CMP instruction is in fact SUB (subtract).}
+{But in fact, this could be perceived paradoxial, but \CMP instruction is in fact \SUB (subtract).}
 \IFRU{Все арифметические инструкции также выставляют флаги в соответствии с результатом, не только \CMP.}
 {All arithmetic instructions set processor flags too, not only \CMP.}
-\IFRU{Если мы сравним 1 и 1, от еденицы отнимется единица, получится ноль, и выставится флаг 
+\IFRU{Если мы сравним 1 и 1, от единицы отнимется единица, получится ноль, и выставится флаг 
 \ZF (\IT{zero flag}), означающий что последний полученный результат является нулем.}
 {If we compare 1 and 1, 1-1 will result zero, \ZF flag will be set (meaning that last result was zero).}
 \IFRU{Ни при каких других значениях \EAX, флаг \ZF выставлен не будет, кроме тех, когда операнды равны друг другу.}
@@ -366,7 +368,7 @@ processor flags\footnote{About x86 flags, see also: \url{http://en.wikipedia.org
 {Таким образом, можно \CMP заменить на \SUB и все будет работать также, но разница в том что \SUB 
 все-таки испортит значение в первом операнде. \CMP это \IT{SUB без сохранения результата}.}
 {So, \CMP can be replaced to \SUB and almost everything will be fine, but the difference is in 
-that \SUB alter value at first operand. \CMP is \IT{"SUB without saving result"}.}
+that \SUB alter value at first operand. \CMP is \IT{``SUB without saving result''}.}
 
 \IFRU
 {Код созданный при помощи GCC 4.4.1 в Linux практически такой же, если не считать мелких отличий, 

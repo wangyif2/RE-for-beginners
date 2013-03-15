@@ -6,7 +6,7 @@
 \IFRU{Стек в компьютерных науках ~--- это одна из наиболее фундаментальных вещей}
 {Stack ~--- is one of the most fundamental things in computer science.}\footnote{\url{http://en.wikipedia.org/wiki/Call_stack}}.
 
-\IFRU{Технически, это просто кусок памяти процесса + регистр \ESP который указывает где-то в пределах этого куска.}{Technically, this is just piece of process memory + \ESP register as a pointer within piece of memory.}
+\IFRU{Технически, это просто блок памяти в памяти процесса + регистр \ESP который указывает где-то в пределах этого блока.}{Technically, this is just memory block in process memory + \ESP register as a pointer within this block.}
 
 \IFRU
 {Часто используемые инструкции для работы со стеком это \PUSH и \POP. 
@@ -22,8 +22,9 @@ this is for 32-bit environment. 8 will be here instead of 4 in x64 environment.}
 
 \IFRU{В самом начале, \ESP указывает на конец стека.}{After stack allocation, \ESP pointing to the end of stack.}
 \IFRU{\PUSH уменьшает \ESP, а \POP ~--- увеличивает.}{\PUSH increasing \ESP, and \POP decreasing.}
-\IFRU{Конец стека находится в начале блока памяти. Это странно, но это так.}
-{The end of stack is actually at the beginning of allocated memory block. It seems strange, but it is so.}
+\IFRU{Конец стека находится в начале блока памяти выделенного под стек. Это странно, но это так.}
+{The end of stack is actually at the beginning of allocated for stack memory block. 
+It seems strange, but it is so.}
 
 \IFRU{Для чего используется стек?}{What stack is used for?}
 
@@ -33,7 +34,7 @@ this is for 32-bit environment. 8 will be here instead of 4 in x64 environment.}
 \IFRU
 {При вызове другой функции через \CALL, сначала в стек записывается адрес указывающий на место аккурат после 
 инструкции \CALL, затем делается безусловный переход (\TT{JMP}) на адрес указанный в операнде.} 
-{While calling another function by \CALL instruction, the address of point exactly after \CALL is saved 
+{While calling another function by \CALL instruction, the address of point exactly after \CALL instruction is saved 
 to stack, and then unconditional jump to the address from CALL operand is executed.} 
 
 \IFRU{\CALL это аналог пары инструкций \TT{PUSH address\_after\_call / JMP}.}
@@ -147,8 +148,8 @@ But traditionally it is so.}
 \IFRU{Интересен случай с функцией \TT{alloca()}}
 {It is worth noting \TT{alloca()} function.}\footnote{
 \IFRU
-{Реализацию функции можно посмотреть в файлах}
-{Function implementation can be found in} 
+{В MSVC, реализацию функции можно посмотреть в файлах}
+{As of MSVC, function implementation can be found in} 
   \TT{alloca16.asm} 
   \IFRU{и}{and} 
   \TT{chkstk.asm} 
@@ -159,7 +160,7 @@ But traditionally it is so.}
 {This function works like \TT{malloc()}, but allocate memory just in stack.}
 
 \IFRU{Память освобождать через \TT{free()} не нужно, так как эпилог функции~\ref{sec:prologepilog} 
-вернет \ESP назад в изначальное состояние и выделенная память просто анулируется.}
+вернет \ESP назад в изначальное состояние и выделенная память просто аyнулируется.}
 {Allocated memory chunk is not needed to be freed via \TT{free()} function call because 
 function epilogue~\ref{sec:prologepilog} will return \ESP back to initial state and 
 allocated memory will be just annuled.} 
@@ -175,11 +176,11 @@ need and set \ESP as a pointer to that \IT{allocated} block.}
 
 \lstinputlisting{stack/2_1.c}
 
-\IFRU{(Функция \_snprintf() работает так же как и \printf, только вместо выдачи результата в 
+\IFRU{(Функция \TT{\_snprintf()} работает так же как и \printf, только вместо выдачи результата в 
 stdout (т.е., на терминал или в консоль),
 записывает его в буфер \TT{buf}. \TT{puts()} выдает содержимое буфера \TT{buf} в stdout. Конечно, можно было бы
 заменить оба этих вызова на один \printf, но мне нужно проиллюстрировать использование небольшого буфера.)}
-{(\_snprintf() function works just like \printf, but instead dumping result into stdout (e.g., to terminal or 
+{(\TT{\_snprintf()} function works just like \printf, but instead dumping result into stdout (e.g., to terminal or 
 console), write it to \TT{buf} buffer. \TT{puts()} copies \TT{buf} contents to stdout. Of course, these two
 function calls might be replaced by one \printf call, but I would like to illustrate small buffer usage.)}
 
@@ -189,11 +190,11 @@ function calls might be replaced by one \printf call, but I would like to illust
 
 \IFRU
 {Единственный параметр в \TT{alloca()} передается через \EAX, а не как обычно через стек.}
-{The sole \TT{alloca()} argument passed via \EAX (but not via stack).}
+{The sole \TT{alloca()} argument passed via \EAX (instead of pushing into stack).}
 
 \IFRU{После вызова \TT{alloca()}, \ESP теперь указывает на блок в 600 байт который 
 мы можем использовать под \TT{buf}.}
-{After \TT{alloca()} call, \ESP is not pointing to the block of 600 bytes and we can 
+{After \TT{alloca()} call, \ESP is now pointing to the block of 600 bytes and we can 
 use it as memory for \TT{buf} array.}
 
 \IFRU{А GCC 4.4.1 обходится без вызова других функций:}
@@ -211,5 +212,5 @@ use it as memory for \TT{buf} array.}
 
 \subsection{\IFRU{Защита от переполнений буфера}{Buffer overflow protection}}
 
-More about it here~\ref{subsec:bufferoverflow}.
+\IFRU{Здесь больше об этом}{More about it here}~\ref{subsec:bufferoverflow}.
 

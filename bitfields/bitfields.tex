@@ -188,7 +188,7 @@ it would be too tight environment for compiler's register allocator}.
 {\OR instruction adding one more bit to value, ignoring others.}
 
 \IFRU{А \AND сбрасывает некий бит. Можно также сказать, что \AND здесь копирует все биты, кроме одного. 
-Действительно, во втором операнде \AND выставлены в еденицу те биты, которые нужно сохранить, 
+Действительно, во втором операнде \AND выставлены в единицу те биты, которые нужно сохранить, 
 кроме одного, копировать который мы не хотим (и который 0 в битовой маске).
 Так проще понять и запомнить.}
 {\AND resetting one bit. It can be said, \AND just copies all bits except one.
@@ -248,7 +248,8 @@ It would be more logical way to emit here \TT{or eax, 04000h}, but that's 5 byte
 Интересно, что и пролог функции (\TT{push ebp / mov ebp,esp}) и эпилог (\TT{pop ebp}) функции можно смело выкинуть
 за ненадобностью, 
 но возможно GCC еще не так хорош для подобных оптимизаций по размеру кода. 
-Впрочем, в реальной жизни, подобные короткие функции лучше всего автоматически делать в виде \IT{inline-функций}\footnote{\URLINL}.}
+Впрочем, в реальной жизни, подобные короткие функции лучше всего автоматически делать в виде 
+\IT{inline-функций}\footnote{\URLINL}.}
 {Indeed ~--- first argument is already loaded into \EAX, so it's possible to work with it in-place.
 It's worth noting that both function prologue (\TT{push ebp / mov ebp,esp}) and epilogue can easily be omitted
 here, but GCC probably isn't good enough for such code size optimizations.
@@ -256,22 +257,22 @@ However, such short functions are better to be \IT{inlined functions}\footnote{\
 
 \subsection{\IFRU{Сдвиги}{Shifts}}
 
-\IFRU{Битовые сдвиги в \CCpp реализованы при помощи операторов \TT{<<} и \TT{>>}.}
-{Bit shifts in \CCpp are implemented via \TT{<<} and \TT{>>} operators.}
+\IFRU{Битовые сдвиги в \CCpp реализованы при помощи операторов $\ll$ и $\gg$.}
+{Bit shifts in \CCpp are implemented via $\ll$ and $\gg$ operators.}
 
 \IFRU{Вот этот несложный пример иллюстрирует функцию, считающую количество бит-единиц во входной переменной:}
 {Here is a simple example of function, calculating number of 1 bits in input variable:}
 
 \lstinputlisting{bitfields/14_7.c}
 
-\IFRU{В этом цикле, счетчик итераций \IT{i} считает от 0 до 31, а \TT{1<<i} будет от 1 до 0x80000000. 
+\IFRU{В этом цикле, счетчик итераций \IT{i} считает от 0 до 31, а $1 \ll i$ будет от 1 до 0x80000000. 
 Описывая это словами, можно сказать 
 \IT{сдвинуть единицу на n бит влево}.
-Т.е., в некотором смысле, выражение \TT{1<<i} последовательно выдаст все возможные позиции бит в 32-битном числе. 
+Т.е., в некотором смысле, выражение $1 \ll i$ последовательно выдаст все возможные позиции бит в 32-битном числе. 
 Кстати, освободившийся бит справа всегда обнуляется. Макрос \TT{IS\_SET} проверяет наличие этого бита в \TT{a}.}
-{In this loop, iteration count value \IT{i} counting from 0 to 31, \TT{1<<i} statement will be counting from 1 to 0x80000000. 
+{In this loop, iteration count value \IT{i} counting from 0 to 31, $1 \ll i$ statement will be counting from 1 to 0x80000000. 
 Describing this operation in naturaul language, we would say \IT{shift 1 by n bits left}.
-In other words, \TT{1<<i} statement will consequentially produce all possible bit positions in 32-bit number.
+In other words, $1 \ll i$ statement will consequentially produce all possible bit positions in 32-bit number.
 By the way, freed bit at right is always cleared. \TT{IS\_SET} macro is checking bit presence in \TT{a}.}
 
 \IFRU{Макрос \TT{IS\_SET} на самом деле это операция логического И (\IT{AND}) 
@@ -291,7 +292,7 @@ it always working correctly.}
 
 \IFRU{Вот так работает SHL (\IT{SHift Left})}{That's how SHL (\IT{SHift Left}) working}.
 
-\IFRU{Скомпилим то же и в}{Let's compile it in} GCC 4.4.1:
+\IFRU{Скомпилируем то же и в}{Let's compile it in} GCC 4.4.1:
 
 \lstinputlisting{bitfields/14_7_gcc.asm}
 
@@ -321,8 +322,8 @@ _f	ENDP
 
 \label{SHR}
 \IFRU{Инструкция SHR (\IT{SHift Right}) сдвигает число на 2 бита вправо. 
-При этом освободившиеся два бита слева (т.е., самые 
-старшие разряды) выставляются в нули. А самые младшие 2 бита выкидываются. 
+При этом, освободившиеся два бита слева (т.е., самые 
+старшие разряды), выставляются в нули. А самые младшие 2 бита выкидываются. 
 Фактически, эти два выкинутых бита ~--- остаток от деления.}
 {SHR (\IT{SHift Right}) instruction is shifting a number by 2 bits right.
 Two freed bits at left (e.g., two most significant bits) are set to zero.
@@ -367,7 +368,7 @@ instead of usual one.}
 {Let's compile it in MSVC with optimization (\Ox).
 For the sake of brevity, only \TT{crc()} function is listed here, with my comments.}
 
-\lstinputlisting{\IFRU{bitfields/14_2_ru.asm}{bitfields/14_2_en.asm}}
+\lstinputlisting{\IFRU{bitfields/14_CRC_2_ru.asm}{bitfields/14_CRC_2_en.asm}}
 
 \IFRU{Попробуем то же самое в GCC 4.4.1 с опцией \TT{-O3}:}
 {Let's try the same in GCC 4.4.1 with \TT{-O3} option:}

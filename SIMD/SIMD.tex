@@ -90,7 +90,7 @@ Loop body takes values from input arrays, do something and put result into outpu
 It's important that there is only one single operation applied to each element.
 Vectorization ~--- is to process several elements simultaneously.}
 
-/IFRU{Например:}{For example:}
+\IFRU{Например:}{For example:}
 
 \begin{lstlisting}
 for (i = 0; i < 1024; i++)
@@ -102,10 +102,10 @@ for (i = 0; i < 1024; i++)
 \IFRU{Этот кусок кода берет элементы из A и B, перемножает и сохраняет результат в C.}
 {This piece of code takes elements from A and B, multiplies them and save result into C.}
 
-\newcommand{\PMULLD}{\IT{PMULLD} (\IT{\IFRU{Multiply Packed Signed Dword Integers and Store Low Result}
-{Перемножить запакованные знаковые DWORD и сохранить младшую часть результата}})}
-\newcommand{\PMULHW}{\TT{PMULHW} (\IT{\IFRU{Multiply Packed Signed Integers and Store High Result}
-{Перемножить апакованные знаковые DWORD и сохранить старшую часть результата}})}
+\newcommand{\PMULLD}{\IT{PMULLD} (\IT{\IFRU{Перемножить запакованные знаковые DWORD и сохранить младшую часть результата}
+{Multiply Packed Signed Dword Integers and Store Low Result}})}
+\newcommand{\PMULHW}{\TT{PMULHW} (\IT{\IFRU{Перемножить апакованные знаковые DWORD и сохранить старшую часть результата}
+{Multiply Packed Signed Integers and Store High Result}})}
 
 \IFRU{Если представить что каждый элемент массива ~--- это 32-битный \Tint, то их можно загружать сразу 
 по 4 из А в 128-битный XMM-регистр, 
@@ -151,23 +151,27 @@ icl intel.cpp /QaxSSE2 /Faintel.asm /Ox
 
 \IFRU{Инструкции имеющие отношение к SSE2 это:}{SSE2-related instructions are:}
 
+\begin{itemize}
+\item
 \MOVDQU (\IT{Move Unaligned Double Quadword}) ~--- \IFRU{она просто загружает 16 байт из памяти в XMM-регистр}
 {it just load 16 bytes from memory into XMM-register}.
 
+\item
 \PADDD (\IT{Add Packed Integers}) ~--- 
-\IFRU{складывает сразу 4 пары чисел и оставляет в первом операнде результат. 
+\IFRU{складывает сразу 4 пары 32-битных чисел чисел и оставляет в первом операнде результат. 
 Кстати, если произойдет переполнение, то исключения не произойдет и никакие флаги не установятся, 
 запишутся просто младшие 32 бита результата. 
 Если один из операндов \PADDD ~--- адрес значения в памяти, 
 то требуется чтобы адрес был выровнен по 16-байтной границе. Если он не выровнен, произойдет исключение
 \footnote{О выравнивании данных см. также: \URLWPDA}.}
-{adding 4 pairs of numbers and leaving result in first operand.
+{adding 4 pairs of 32-bit numbers and leaving result in first operand.
 By the way, no exception raised in case of overflow and no flags will be set, just low 32-bit of result will
 be stored.
 If one of \PADDD operands ~--- address of value in memory,
 address should be aligned by 16-byte border. If it's not aligned, exception will be raised
 \footnote{More about data aligning: \URLWPDA}.}
 
+\item
 \MOVDQA (\IT{Move Aligned Double Quadword}) ~--- \IFRU{тоже что и \MOVDQU, только подразумевает 
 что адрес в памяти выровнен по 16-байтной границе. 
 Если он не выровнен, произойдет исключение. 
@@ -175,6 +179,8 @@ address should be aligned by 16-byte border. If it's not aligned, exception will
 {the same as \MOVDQU, but requires address of value in memory to be aligned by 16-bit border.
 If it's not aligned, exception will be raised.
 \MOVDQA works faster than \MOVDQU, but requires aforesaid.}
+
+\end{itemize}
 
 \IFRU{Итак, эти SSE2-инструкции исполнятся только в том случае если еще осталось просуммировать 
 4 пары переменных типа \Tint плюс если указатель \TT{ar3} выровнен по 16-байтной границе.}
@@ -185,9 +191,9 @@ plus pointer \TT{ar3} is aligned on 16-byte border.}
 {More than that, if \TT{ar2} is aligned on 16-byte border too, this piece of code will be executed:}
 
 \begin{lstlisting}
-                movdqu  xmm0, xmmword ptr [ebx+edi*4] ; ar1+i*4
-                paddd   xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4
-                movdqa  xmmword ptr [eax+edi*4], xmm0 ; ar3+i*4
+movdqu  xmm0, xmmword ptr [ebx+edi*4] ; ar1+i*4
+paddd   xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4
+movdqa  xmmword ptr [eax+edi*4], xmm0 ; ar3+i*4
 \end{lstlisting}
 
 \IFRU{А иначе, значение из \TT{ar2} загрузится в \XMMZERO используя инструкцию \MOVDQU, 
@@ -196,10 +202,10 @@ plus pointer \TT{ar3} is aligned on 16-byte border.}
 it doesn't require aligned pointer, but may work slower:}
 
 \begin{lstlisting}
-                movdqu  xmm1, xmmword ptr [ebx+edi*4] ; ar1+i*4
-                movdqu  xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4 is not 16-byte aligned, so load it to xmm0
-                paddd   xmm1, xmm0
-                movdqa  xmmword ptr [eax+edi*4], xmm1 ; ar3+i*4
+movdqu  xmm1, xmmword ptr [ebx+edi*4] ; ar1+i*4
+movdqu  xmm0, xmmword ptr [esi+edi*4] ; ar2+i*4 is not 16-byte aligned, so load it to xmm0
+paddd   xmm1, xmm0
+movdqa  xmmword ptr [eax+edi*4], xmm1 ; ar3+i*4
 \end{lstlisting}
 
 \IFRU{А во всех остальных случаях, будет исполняться код, который был бы как если бы не была 
@@ -222,13 +228,13 @@ if to use \TT{-O3} option and to turn on SSE2 support: \TT{-msse2}.}
 \IFRU{Почти то же самое, хотя и не так дотошно как Intel C++.}
 {Almost the same, however, not as meticulously as Intel C++ doing it.}
 
-\subsection{\IFRU{Реализация \strlen() при помощи SIMD}{SIMD \strlen() implementation}}
+\subsection{\IFRU{Реализация \strlen при помощи SIMD}{SIMD \strlen implementation}}
 
 \newcommand{\URLMSDNSSE}{\href{http://msdn.microsoft.com/en-us/library/y0dh78ez(VS.80).aspx}{MSDN: MMX, SSE, and SSE2 Intrinsics}}
 
 \IFRU{Прежде всего, следует заметить, что SIMD-инструкции можно вставлять в \CCpp код при помощи специальных 
 макросов\footnote{\URLMSDNSSE}. В MSVC, часть находится в файле \TT{intrin.h}.}
-\IFRU{It should be noted that SIMD-instructions may be inserted into \CCpp code via 
+{It should be noted that SIMD-instructions may be inserted into \CCpp code via 
 special macros\footnote{\URLMSDNSSE}.
 As of MSVC, some of them are located in \TT{intrin.h} file.}
 
@@ -273,12 +279,12 @@ if not ~--- use slower \MOVDQU.}
 
 \newcommand{\URLPAGE}{\url{http://en.wikipedia.org/wiki/Page_(computer_memory)}}
 
-\IFRU{В ОС линии Windows NT, и не только, память выделяется страницами по 4 KiB (4096 байт). 
+\IFRU{В ОС линии Windows NT\footnote{Windows NT, 2000, XP, Vista, 7, 8}, и не только, память выделяется страницами по 4 KiB (4096 байт). 
 Каждый win32-процесс якобы имеет в наличии 4 GiB, но на самом деле, 
 только некоторые части этого адресного пространства присоеденены к реальной физической памяти. 
 Если процесс обратится к блоку памяти, которого не существует, сработает исключение. 
 Так работает виртуальная память\footnote{\URLPAGE}.}
-{In Windows NT line of operation systems, but not limited to it, memory allocated by pages of 4 KiB (4096 bytes).
+{In Windows NT line of operation systems\footnote{Windows NT, 2000, XP, Vista, 7, 8}, but not limited to it, memory allocated by pages of 4 KiB (4096 bytes).
 Each win32-process have ostensibly 4 GiB, but in fact, only some parts
 of address space are connected to real physical memory.
 If the process accessing to the absent memory block, exception will be raised.
@@ -383,7 +389,7 @@ was set in \XMMZERO by \TT{pxor xmm0, xmm0}.}
 
 \TT{pmovmskb eax, xmm1}
 
-\IFRU{Эта инструкция выставит самый первый бит \EAX в еденицу, если старший бит первого байта в 
+\IFRU{Эта инструкция выставит самый первый бит \EAX в единицу, если старший бит первого байта в 
 регистре \XMMONE является единицей. 
 Иными словами, если первый байт в регистре \XMMONE является 0xff, то первый бит в \EAX будет также единицей, 
 иначе нулем.}
@@ -442,7 +448,7 @@ EAX=0010000000100000b
 1 found at 5th bit position (starting from zero).}
 
 \IFRU{Для использования этой инструкции, в MSVC также имеется макрос}
-{MSVC has a macro for this instruction:}\TT{\_BitScanForward}.
+{MSVC has a macro for this instruction:} \TT{\_BitScanForward}.
 
 \IFRU{А дальше все просто. Если нулевой байт найден, его позиция прибавляется к тому что 
 мы уже насчитали и возвращается результат.}
@@ -456,5 +462,5 @@ ready to return result.}
 
 \IFRU{Кстати, в SSE 4.2 (который появился в Intel Core i7) все эти манипуляции со строками могут быть еще проще:}
 {By the way, SSE 4.2 (appeared in Intel Core i7) offers more instructions where these string manipulations might be
-even easier:}\url{http://www.strchr.com/strcmp\_and\_strlen\_using\_sse\_4.2}
+even easier:} \url{http://www.strchr.com/strcmp\_and\_strlen\_using\_sse\_4.2}
 

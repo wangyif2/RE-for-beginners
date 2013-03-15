@@ -67,7 +67,7 @@ _main	ENDP
 \end{lstlisting}
 
 \IFRU{Итак, здесь видно: в функции \TT{\_main} заталкиваются три числа в стек и вызывается 
-функиця \TT{f(int,int,int)}.}
+функция \TT{f(int,int,int)}.}
 {What we see is that 3 numbers are pushing to stack in function \TT{\_main} and \TT{f(int,int,int)} is called then.}
 \IFRU{Внутри \TT{f()}, доступ к аргументам, также как и к локальным переменным, происходит через макросы: 
 \TT{\_a\$ = 8}, но разница в том, что эти смещения со знаком \IT{плюс}, 

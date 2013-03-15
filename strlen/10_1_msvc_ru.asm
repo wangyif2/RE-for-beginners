@@ -13,7 +13,7 @@ $LN2@strlen_:
 
     movsx   edx, BYTE PTR [ecx]               
     mov     eax, DWORD PTR _eos$[ebp]   ; eax=eos
-    add     eax, 1                      ; увеличить eax на еденицу
+    add     eax, 1                      ; увеличить eax на единицу
     mov     DWORD PTR _eos$[ebp], eax   ; положить eax назад в eos
     test    edx, edx                    ; edx==0?
     je      SHORT $LN1@strlen_          ; да, то что лежит в edx это ноль, выйти из цикла
@@ -24,7 +24,7 @@ $LN1@strlen_:
 
     mov    eax, DWORD PTR _eos$[ebp]         
     sub    eax, DWORD PTR _str$[ebp]
-    sub    eax, 1                       ; отнимаем от разницы еще еденицу и возвращаем результат
+    sub    eax, 1                       ; отнимаем от разницы еще единицу и возвращаем результат
     mov    esp, ebp
     pop    ebp
     ret    0

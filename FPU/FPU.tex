@@ -20,7 +20,7 @@ stay aside of main processor.}
 
 \IFRU{Перед изучением FPU полезно ознакомиться с тем как работают стековые машины\FNURLSTACK, 
 или ознакомиться с основами языка Forth\FNURLFORTH.}
-{It is worth to study stack machines\FNURLSTACK before FPU studying, or learn Forth language basics\FNURLFORTH.}
+{It is worth to study stack machines\FNURLSTACK{} before FPU studying, or learn Forth language basics\FNURLFORTH.}
 
 \IFRU{Интересен факт, что в свое время (до 80486) сопроцессор был отдельным чипом на материнской плате, 
 и вследствии его высокой цены, он стоял не всегда. Его можно было докупить отдельно и поставить.}
@@ -34,7 +34,7 @@ and it was not always settled on motherboard. It was possible to buy it separate
 {FPU has a stack capable to hold 8 80-bit registers, each register can hold a number 
 in IEEE 754\FNURLIEEE format.}
 
-\IFRU{В \CCpp типы имеются два типа для работы с числами с плавающей запятой, 
+\IFRU{В \CCpp имеются два типа для работы с числами с плавающей запятой, 
 это \Tfloat (\IT{число одинарной точности}\FNURLSP, 32 бита)
 \footnote{Формат представления float-чисел затрагивается в разделе 
 \IT{\WorkingWithFloatAsWithStructSubSubSectionName}~\ref{sec:floatasstruct}.}
@@ -44,7 +44,7 @@ in IEEE 754\FNURLIEEE format.}
 \IT{\WorkingWithFloatAsWithStructSubSubSectionName}~\ref{sec:floatasstruct} section}
 and \Tdouble (\IT{double-precision}\FNURLDP, 64 bits).}
 
-\IFRU{GCC поддерживает тип \IT{long double} (\IT{extended precision}\FNURLEP, 80 бит), но MSVC ~--- нет.}
+\IFRU{GCC также поддерживает тип \IT{long double} (\IT{extended precision}\FNURLEP, 80 бит), но MSVC ~--- нет.}
 {GCC also supports \IT{long double} type (\IT{extended precision}\FNURLEP, 80 bit) but MSVC is not.}
 
 \IFRU{Не смотря на то что \Tfloat занимает столько же места сколько \Tint на 32-битной архитектуре, 

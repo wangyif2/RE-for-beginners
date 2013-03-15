@@ -27,7 +27,7 @@ it into internal 80-bit format \IT{extended precision}).}
 3.14 value is coded there. Assembler syntax missing floating point numbers, so, 
 what we see here is hexadecimal representation of \IT{3.14} number in 64-bit IEEE 754 encoded.}
 
-\IFRU{После выполнения \FDIV, в \STZERO остается результат деления.}
+\IFRU{После выполнения \FDIV, в \STZERO остается частное\footnote{результат деления}.}
 {After \FDIV execution, \STZERO will hold quotient\footnote{division result}.}
 
 \IFRU{Кстати, есть еще инструкция \FDIVP, которая делит \STONE на \STZERO, 
@@ -70,8 +70,8 @@ other code except of function epilogue.}
 in \TT{arg\_0} is dividing by what is in \STZERO register.}
 
 \IFRU{\FDIVR означает \IT{Reverse Divide} ~--- делить поменяв делитель и делимое местами. 
-Точно такой же инструкции для умножения нет, потому она была бы бессмыслена (ведь умножение ~--- 
-операция коммутативная), так что там остается только \FMUL без соответсвующей ей \TT{-R} инструкции.}
+Точно такой же инструкции для умножения нет, потому что она была бы бессмыслена (ведь умножение ~--- 
+операция коммутативная), так что остается только \FMUL без соответсвующей ей \TT{-R} инструкции.}
 {\FDIVR meaning \IT{Reverse Divide} ~--- to divide with divisor and dividend swapped with each other. 
 There are no such instruction for multiplication, because multiplication is 
 commutative operation, so we have just \FMUL without its \TT{-R} counterpart.}

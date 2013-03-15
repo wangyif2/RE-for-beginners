@@ -1,5 +1,5 @@
-\section{\IFRU{"QR9": Любительская криптосистема вдохновленная кубиком Рубика}
-{"QR9": Rubik's cube inspired amateur crypto-algorithm}}
+\section{\IFRU{``QR9'': Любительская криптосистема вдохновленная кубиком Рубика}
+{``QR9'': Rubik's cube inspired amateur crypto-algorithm}}
 
 \IFRU{Любительские криптосистемы иногда попадаются довольно странные.}
 {Sometimes amateur cryptosystems appear to be pretty bizarre.}
@@ -121,8 +121,8 @@ File opening result is being checked though.}
 .text:005413C1                 mov     edi, eax
 \end{lstlisting}
 
-\IFRU{Теперь хэндл созданного файла в регистре \EDI. Зписываем сигнатуру "QR9".}
-{Newly created file handle is in \EDI register now. Write signature "QR9".}
+\IFRU{Теперь хэндл созданного файла в регистре \EDI. Зписываем сигнатуру ``QR9''.}
+{Newly created file handle is in \EDI register now. Write signature ``QR9''.}
 
 \begin{lstlisting}
 .text:005413C3                 push    edi             ; File
@@ -399,10 +399,10 @@ void decrypt_file(char *fin, char* fout, char *pw)
 .text:0054126A loc_54126A:
 \end{lstlisting}
 
-\IFRU{Этот кусок кода копирует часть входного буфера во внутренний буфер, который я поже назвал "cube64".}
-{This piece of code copies part of input buffer to internal array I named later "cube64".}
-\IFRU{Длина в регистре \ECX. \TT{MOVSD} означает "скопировать 32-битное слово", так что, 16 32-битных слов
-это как раз 64 байта.}{The size is in \ECX register. \TT{MOVSD} means "move 32-bit dword", so, 
+\IFRU{Этот кусок кода копирует часть входного буфера во внутренний буфер, который я поже назвал ``cube64''.}
+{This piece of code copies part of input buffer to internal array I named later ``cube64''.}
+\IFRU{Длина в регистре \ECX. \TT{MOVSD} означает \IT{скопировать 32-битное слово}, так что, 16 32-битных слов
+это как раз 64 байта.}{The size is in \ECX register. \TT{MOVSD} means \IT{move 32-bit dword}, so, 
 16 of 32-bit dwords are exactly 64 bytes.}
 
 \begin{lstlisting}
@@ -421,8 +421,8 @@ void decrypt_file(char *fin, char* fout, char *pw)
 .text:0054127F                 call    rotate_all_with_password
 \end{lstlisting}
 
-\IFRU{Скопировать зашифрованное содержимое из "cube64" назад в буфер}
-{Copy crypted contents back from "cube64" to buffer}:
+\IFRU{Скопировать зашифрованное содержимое из ``cube64'' назад в буфер}
+{Copy crypted contents back from ``cube64'' to buffer}:
 
 \begin{lstlisting}
 .text:00541284                 mov     eax, [esp+18h+arg_4]
@@ -523,14 +523,14 @@ they seem to be ignored.}
 .text:005411DC                 movsx   ecx, al
 \end{lstlisting}
 
-\IFRU{Отнимем значение "a" (97) от символа.}{Subtract "a" value (97) from character.}
+\IFRU{Отнимем значение ``a'' (97) от символа.}{Subtract ``a'' value (97) from character.}
 
 \begin{lstlisting}
 .text:005411DF                 sub     ecx, 'a'  ; 97
 \end{lstlisting}
 
-\IFRU{После вычитания, тут будет 0 для "a", 1 для "b", и так далее. И 25 для "z".}
-{After subtracting, we'll get 0 for "a" here, 1 for "b", etc. And 25 for "z".}
+\IFRU{После вычитания, тут будет 0 для ``a'', 1 для ``b'', и так далее. И 25 для ``z''.}
+{After subtracting, we'll get 0 for ``a'' here, 1 for ``b'', etc. And 25 for ``z''.}
 
 \begin{lstlisting}
 .text:005411E2                 cmp     ecx, 24
@@ -538,11 +538,11 @@ they seem to be ignored.}
 .text:005411E7                 sub     ecx, 24
 \end{lstlisting}
 
-\IFRU{Похоже, символы "y" и "z" также исключительные.
-После этого куска кода, "y" становится 0, а "z" ~--- 1.
+\IFRU{Похоже, символы ``y'' и ``z'' также исключительные.
+После этого куска кода, ``y'' становится 0, а ``z'' ~--- 1.
 Это значит что 26 латинских букв становятся значениями в интервале 0..23, (всего 24).}
-{It seems, "y" and "z" are exceptional characters too. 
-After that piece of code, "y" becomes 0 and "z" ~--- 1. 
+{It seems, ``y'' and ``z'' are exceptional characters too. 
+After that piece of code, ``y'' becomes 0 and ``z'' ~--- 1. 
 This means, 26 latin alphabet symbols will become values in range 0..23, (24 in total).}
 
 \begin{lstlisting}
@@ -551,9 +551,9 @@ This means, 26 latin alphabet symbols will become values in range 0..23, (24 in 
 \end{lstlisting}
 
 \IFRU{Это, на самом деле, деление через умножение.
-Читайте об этом больше в секции "\DivisionByNineSectionName"~\ref{sec:divisionbynine}.}
+Читайте об этом больше в секции ``\DivisionByNineSectionName''~\ref{sec:divisionbynine}.}
 {This is actually division via multiplication. 
-Read more about it in "\DivisionByNineSectionName" section~\ref{sec:divisionbynine}.}
+Read more about it in ``\DivisionByNineSectionName'' section~\ref{sec:divisionbynine}.}
 
 \IFRU{Это код, на самом деле, делит значение символа пароля на 3.}
 {The code actually divides password character value by 3.}
@@ -863,7 +863,7 @@ int get_bit (int x, int y, int shift)
 
 \IFRU{Здесь два вложенных цикла:}{Two nested loops are here:}
 
-\lstinputlisting{\IFRU{qr9/5ru.asm}{qr9/5ru.asm}}
+\lstinputlisting{\IFRU{qr9/5ru.asm}{qr9/5en.asm}}
 
 \IFRU{Мы видим что оба счетчика циклов в интервале 0..7. 
 Также, они используются как первый и второй аргумент \TT{get\_bit()}.
@@ -908,9 +908,9 @@ void rotate1 (int v)
 
 \lstinputlisting{\IFRU{qr9/7ru.asm}{qr9/7en.asm}}
 
-\IFRU{\IT{Почти} то же самое, за исключением порядка аргументов в \TT{get\_bit()} и \TT{set\_bit()}.
+\IFRU{\IT{Почти} то же самое, за исключением иного порядка аргументов в \TT{get\_bit()} и \TT{set\_bit()}.
 Перепишем это на Си-подобный код:}
-{It is \IT{almost} the same, except of order of arguments of \TT{get\_bit()} and \TT{set\_bit()}. 
+{It is \IT{almost} the same, except of different order of arguments of \TT{get\_bit()} and \TT{set\_bit()}. 
 Let's rewrite it in C-like code:}
 
 \begin{lstlisting}
@@ -1006,10 +1006,10 @@ If you want to get back, do the same in reverse order and direction!
 If you need to undo effect of rotating one place in clockwise direction, rotate it thrice
 in counter-clockwise direction.}
 
-\IFRU{\TT{rotate1()}, вероятно, поворот "лицевой" плоскости. \TT{rotate2()}, вероятно, поворот "верхней" плоскости.
-\TT{rotate3()}, вероятно, поворот "левой" плоскости.}
-{\TT{rotate1()} is probably for rotating "front" plane. \TT{rotate2()} is probably for rotating "top" plane. 
-\TT{rotate3()} is probably for rotating "left" plane.}
+\IFRU{\TT{rotate1()}, вероятно, поворот ``лицевой'' плоскости. \TT{rotate2()}, вероятно, поворот ``верхней'' плоскости.
+\TT{rotate3()}, вероятно, поворот ``левой'' плоскости.}
+{\TT{rotate1()} is probably for rotating ``front'' plane. \TT{rotate2()} is probably for rotating ``top'' plane. 
+\TT{rotate3()} is probably for rotating ``left'' plane.}
 
 \IFRU{Вернемся к ядру функции \TT{rotate\_all()}}{Let's get back to core of \TT{rotate\_all()} function:}
 

@@ -48,13 +48,13 @@ then it will be enough just to compare the functions. It may solve some part of 
 Это очень большая программа, но к ней идет подробный .PDB-файл с отладочной информацией, и это очень удобно. 
 Я в конце концов пришел к тому что одна из функций декомпрессирующая пакеты называется CsDecomprLZC(). 
 Не сильно раздумывая, я решил погуглить и оказалось что функция с таким же названием имеется в MaxDB
-(это опен-сорсный проект SAP)\footnote{Больше об этом в соответствующей секции~\ref{SAPGUI}}.}
+(это опен-сорсный проект SAP)\footnote{Больше об этом в соответствующей секции~\ref{sec:SAPGUI}}.}
 {For example, once upon a time I tried to understand how SAP 6.0 network packets compression/decompression 
 is working.
 It's a huge software, but a detailed .PDB with debugging information is present, and that's cosily.
 I finally came to idea that one of the functions doing decompressing of network packet called CsDecomprLZC().
 Immediately I tried to google its name and I quickly found that the function named as the same is used in MaxDB
-(it's open-source SAP project)\footnote{More about it in releval section~\ref{SAPGUI}}.}
+(it's open-source SAP project)\footnote{More about it in releval section~\ref{sec:SAPGUI}}.}
 
 \url{http://www.google.com/search?q=CsDecomprLZC}
 
@@ -91,7 +91,7 @@ from which this function called and most important: how the results are used.}
 Бывают неожиданные случаи вроде использования \rand в алгоритме для сжатия данных (для имитации шифрования):}
 {But if it's not a game, but \rand is used, it's also interesing, why.
 There are cases of unexpected \rand usage in data compression algorithm (for encryption imitation):}
-\url{http://blogs.conus.info/node/44}.
+\url{http://blog.yurichev.com/node/44}.
 
 \section{\IFRU{Строки}{String}}
 
@@ -115,8 +115,8 @@ For example, one of such functions in Oracle RDBMS is \TT{ksdwrt()}.}
 {Sometimes \TT{assert()} macro presence is useful too: usually, this macro leave in code source file name, 
 line number and condition.}
 
-\newcommand{\CONUSONE}{http://blogs.conus.info/node/32}
-\newcommand{\CONUSTWO}{http://blogs.conus.info/node/43}
+\newcommand{\CONUSONE}{http://blog.yurichev.com/node/32}
+\newcommand{\CONUSTWO}{http://blog.yurichev.com/node/43}
 
 \IFRU{Осмысленные текстовые строки вообще очень сильно могут помочь. 
 Дизассемблер \IDA может сразу указать, из какой функции и из какого её места используется эта строка. 
@@ -170,15 +170,15 @@ it's very high probability this function is related to MD5.}
 
 \newcommand{\FNURLMAGIC}{\footnote{\url{http://en.wikipedia.org/wiki/Magic_number_(programming)}}}
 
-\IFRU{Немало форматов файлов определяет стандартный заголовок файла где используются \IT{magic numbers}\FNURLMAGIC.}
-{A lot of file formats defining a standard file header where \IT{magic number}\FNURLMAGIC is used.}
+\IFRU{Немало форматов файлов определяет стандартный заголовок файла где используются \IT{magic numbers}\FNURLMAGIC{}.}
+{A lot of file formats defining a standard file header where \IT{magic number}\FNURLMAGIC{} is used.}
 
 \IFRU{Скажем, все исполняемые файлы для Win32 и MS-DOS начинаются с двух символов}
-{For example, all Win32 and MS-DOS executables are started with two characters} "MZ"\footnote{\url{http://en.wikipedia.org/wiki/DOS_MZ_executable}}.
+{For example, all Win32 and MS-DOS executables are started with two characters} ``MZ''\footnote{\url{http://en.wikipedia.org/wiki/DOS_MZ_executable}}.
 
-\IFRU{В начале MIDI-файла должно быть "MThd". Если у нас есть использующая для чего-нибудь MIDI-файлы программа
+\IFRU{В начале MIDI-файла должно быть ``MThd''. Если у нас есть использующая для чего-нибудь MIDI-файлы программа
 очень вероятно, что она будет проверять MIDI-файлы на правильность хотя бы проверяя первые 4 байта.}
-{At the MIDI-file beginning "MThd" signature must be present. 
+{At the MIDI-file beginning ``MThd'' signature must be present. 
 If we have a program that using MIDI-files for something,
 very likely, it will check MIDI-files for validity by checking at least first 4 bytes.}
 
@@ -272,8 +272,8 @@ cat EXCEL.lst | grep fdiv | grep -v dbl_ > EXCEL.fdiv
 \IFRU{... то окажется, что их всего 144.}
 {... then we realizing they are just 144.}
 
-\IFRU{Мы можем вводить в Excel строку вроде \TT{"=(1/3)"} и проверить все эти инструкции.}
-{We can enter string like \TT{"=(1/3)"} in Excel and check each instruction.}
+\IFRU{Мы можем вводить в Excel строку вроде \TT{=(1/3)} и проверить все эти инструкции.}
+{We can enter string like \TT{=(1/3)} in Excel and check each instruction.}
 
 \IFRU{Проверяя каждую инструкцию в отладчике или tracer~\ref{tracer} 
 (проверять эти инструкции можно по 4 за раз), 

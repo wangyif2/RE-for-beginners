@@ -18,7 +18,7 @@ _d_max     PROC
     test   ah, 5
     jp     SHORT $LN1@d_max
 
-; we are here if a>b
+; мы здесь если if a>b
 
     fld    QWORD PTR _a$[ebp]
     jmp    SHORT $LN2@d_max

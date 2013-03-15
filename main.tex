@@ -22,7 +22,8 @@
 \usepackage{xspace}
 \usepackage{framed}
 \usepackage{ccicons}
-\usepackage[]{hyperref}
+\usepackage{amsmath}
+\usepackage[]{hyperref} % should be last
 
 \definecolor{lstbgcolor}{rgb}{0.94,0.94,0.94}
 
@@ -33,7 +34,7 @@
 {Quick introduction to reverse engineering for beginners}}
 \newcommand{\AUTHOR}{\IFRU{Денис Юричев}{Dennis Yurichev}}
 \newcommand{\EMAIL}{dennis@yurichev.com}
-\newcommand{\VERSION}{0.5} % version WHICH IS PREPARED NOW. 0.2 mean 0.19999(9)
+\newcommand{\VERSION}{0.6} % version WHICH IS PREPARED NOW. 0.2 mean 0.19999(9)
 
 \hypersetup{
     pdftex,
@@ -44,7 +45,6 @@
     }
 
 \selectlanguage{english}
-\setcounter{chapter}{1}
 
 \lstset{
     backgroundcolor=\color{lstbgcolor},
@@ -111,13 +111,13 @@ To view a copy of this license, visit} \url{http://creativecommons.org/licenses/
 {Когда я учил Си, а затем Си++, я просто писал небольшие куски кода, компилировал и смотрел что 
 получилось на ассемблере, так мне понять было намного проще. Я делал это такое количество раз, 
 что связь между кодом на \CCpp и тем что генерирует компилятор вбилась мне в подсознание достаточно 
-глубоко, поэтому я могу глядя на код на асме сразу понимать, в общих чертах, что там было написано 
+глубоко, поэтому я могу глядя на код на ассемблере сразу понимать, в общих чертах, что там было написано 
 на Си. Возможно это поможет кому-то еще, попробую описать некоторые примеры.}
 {When I first learn C and then C++, I was just writing small pieces of code, compiling it and see what 
 is producing in assembler, that was an easy way to me. I did it a lot times and relation 
 between \CCpp code and what compiler produce was imprinted in my mind so deep so that 
 I can quickly understand what was in C code when I look at produced x86 code. 
-Perhaps, this method may be helpful for anyone other, so I'll try to describe here some examples.}
+Perhaps, this method may be helpful for anyone else, so I'll try to describe here some examples.}
 
 % TODO: english/russian version is also present: URL
 

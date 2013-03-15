@@ -171,6 +171,7 @@ Then, 84 bytes was allocated for array and \IT{i} variable. That's \TT{(20+1)*si
 \IFRU{Вот так выглядит разметка стека пока управление находится внутри}
 {That's stack layout while control is inside} \TT{\_main}:
 
+\begin{center}
 \begin{tabular}{ | l | l | }
 \hline
   \TT{ESP}    & \IFRU{4 байта для \IT{i}}{4 bytes for \IT{i}} \\
@@ -179,9 +180,10 @@ Then, 84 bytes was allocated for array and \IT{i} variable. That's \TT{(20+1)*si
   \TT{ESP+88} & \IFRU{адрес возврата}{returning address} \\
 \hline
 \end{tabular}
+\end{center}
 
-\IFRU{Команда \TT{a[19]=чего\_нибудь} записывает последний \Tint в пределах массива (пока что!)}
-{Instruction \TT{a[19]=something} writes last \Tint in array bounds (yet!)}
+\IFRU{Команда \TT{a[19]=чего\_нибудь} записывает последний \Tint в пределах массива (пока что в пределах!)}
+{Instruction \TT{a[19]=something} writes last \Tint in array bounds (in bounds yet!)}
 
 \IFRU{Команда \TT{a[20]=чего\_нибудь} записывает \IT{чего\_нибудь} на место где сохранено значение \EBP.}
 {Instruction \TT{a[20]=something} writes \IT{something} to the place where \EBP value is saved.}

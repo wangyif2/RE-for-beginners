@@ -1,11 +1,11 @@
 \section{\IFRU{Случай сжимания сетевого траффика в клиенте SAP}{SAP client network traffic compression case}}
 \label{sec:SAPGUI}
 
-\newcommand{\TDWNC}{TDW\_NOCOMPRESS}
+\newcommand{\TDWNC}{TDW\_NOCOMPRESS\xspace}
 
-\IFRU{(Трассировка связи между переменной окружения \TDWNC SAPGUI\footnote{GUI-клиент от SAP}
-до "надоедливого всплывающего окна" и самой функции сжатия данных.)}
-{(Tracing connection between \TDWNC SAPGUI\footnote{SAP GUI client} environment variable to 
+\IFRU{(Трассировка связи между переменной окружения \TDWNC{} SAPGUI\footnote{GUI-клиент от SAP}
+до ``надоедливого всплывающего окна'' и самой функции сжатия данных.)}
+{(Tracing connection between \TDWNC{} SAPGUI\footnote{SAP GUI client} environment variable to 
 nagging pop-up window and actual data compression routine.)}
 
 \IFRU{Известно что сетевой траффик между SAPGUI и SAP по умолчанию не шифруется а сжимается} 
@@ -28,14 +28,14 @@ nagging pop-up window and actual data compression routine.)}
 \IFRU{Но в начале давайте посмотрим, что мы уже знаем}{But before this, let's see what we already know}.
 \IFRU{Первое: мы знаем что переменна окружения \IT{\TDWNC} проверяется где-то внутри клиента SAPGUI.}
 {First: we know that environment variable \IT{\TDWNC} is checked somewhere inside of SAPGUI client.}
-\IFRU{Второе: строка вроде "data compression switched off" так же должна где-то присутствовать.}
-{Second: string like "data compression switched off" must be present somewhere too.}
+\IFRU{Второе: строка вроде ``data compression switched off'' так же должна где-то присутствовать.}
+{Second: string like ``data compression switched off'' must be present somewhere too.}
 \IFRU{При помощи файлового менджера FAR я нашел обе эти строки в файле SAPguilib.dll.}
 {With the help of FAR file manager I found that both of these strings are stored in the SAPguilib.dll file.}
 
-\IFRU{Так что давайте откроем файл SAPguilib.dll в \IDA и поищем там строку \IT{"\TDWNC"}.
+\IFRU{Так что давайте откроем файл SAPguilib.dll в \IDA и поищем там строку \IT{``\TDWNC''}.
 Да, она присутствует и имеется только одна ссылка на эту строку.}
-{So let's open SAPguilib.dll in \IDA and search for \IT{"\TDWNC"} string. 
+{So let's open SAPguilib.dll in \IDA and search for \IT{``\TDWNC''} string. 
 Yes, it is present and there is only one reference to it.}
 
 \IFRU{Мы увидим такой кусок кода
@@ -71,10 +71,10 @@ Yes, it is present and there is only one reference to it.}
 \end{lstlisting}
 
 \IFRU{Строка возвращаемая функцией \TT{chk\_env()} через второй аргумент, обрабатывается далее строковыми
-функциями MFC, затем вызывается atoi()\footnote{Стандартная функция Си, конвертирующая число в строке в число}.
+функциями MFC, затем вызывается \TT{atoi()}\footnote{Стандартная функция Си, конвертирующая число в строке в число}.
 После этого, число сохраняется в \TT{edi+15h}}
 {String returned by \TT{chk\_env()} via second argument is then handled by MFC string functions and then 
-atoi()\footnote{standard C library function, coverting number in string into number} is called. 
+\TT{atoi()}\footnote{standard C library function, coverting number in string into number} is called. 
 After that, numerical value is stored to \TT{edi+15h}}.
 
 \IFRU{Обратите так же внимание на функцию \TT{chk\_env} (это я так назвал её)}
@@ -168,8 +168,9 @@ After that, numerical value is stored to \TT{edi+15h}}.
 .text:64413FBF chk_env         endp
 \end{lstlisting}
 
-\IFRU{Да}{Yes}.\IFRU{Функция} \href{http://msdn.microsoft.com/en-us/library/tb2sfw2z(VS.80).aspx}{getenv\_s()} \IFRU{это \IT{безопасная} версия функции getenv()\footnote{Стандартная функция Си возвращающая значение переменной окружения} в MSVC}
-{function is Microsoft security-enhanced version of getenv()\footnote{Standard C library returning environment variable}}.
+\IFRU{Да}{Yes}. \IFRU{Функция}{} \TT{getenv\_s()}\footnote{\url{http://msdn.microsoft.com/en-us/library/tb2sfw2z(VS.80).aspx}} 
+\IFRU{это \IT{безопасная} версия функции \TT{getenv()}\footnote{Стандартная функция Си возвращающая значение переменной окружения} в MSVC}
+{function is Microsoft security-enhanced version of \TT{getenv()}\footnote{Standard C library returning environment variable}}.
 
 \IFRU{Тут так же имеются манипуляции со строками при помощи функций из MFC}{There are also some MFC string manipulations}.
 
@@ -180,27 +181,27 @@ Here is a list of all variables being checked and what SAPGUI could write to tra
 \begin{center}
 \begin{tabular}{ | l | l | }
 \hline                        
-DPTRACE                  & "GUI-OPTION: Trace set to \%d" \\
-TDW\_HEXDUMP             & "GUI-OPTION: Hexdump enabled" \\
-TDW\_WORKDIR             & "GUI-OPTION: working directory '\%s'" \\
-TDW\_SPLASHSRCEENOFF     & "GUI-OPTION: Splash Screen Off" / "GUI-OPTION: Splash Screen On" \\
-TDW\_REPLYTIMEOUT        & "GUI-OPTION: reply timeout \%d milliseconds" \\
-TDW\_PLAYBACKTIMEOUT     & "GUI-OPTION: PlaybackTimeout  set to \%d milliseconds" \\ 
-TDW\_NOCOMPRESS          & "GUI-OPTION: no compression read" \\
-TDW\_EXPERT              & "GUI-OPTION: expert mode" \\
-TDW\_PLAYBACKPROGRESS    & "GUI-OPTION: PlaybackProgress" \\
-TDW\_PLAYBACKNETTRAFFIC  & "GUI-OPTION: PlaybackNetTraffic" \\
-TDW\_PLAYLOG             & "GUI-OPTION: /PlayLog is YES, file \%s" \\
-TDW\_PLAYTIME            & "GUI-OPTION: /PlayTime set to \%d milliseconds" \\
-TDW\_LOGFILE             & "GUI-OPTION: TDW\_LOGFILE '\%s'" \\
-TDW\_WAN                 & "GUI-OPTION: WAN - low speed connection enabled" \\
-TDW\_FULLMENU            & "GUI-OPTION: FullMenu enabled" \\
-SAP\_CP / SAP\_CODEPAGE  & "GUI-OPTION: SAP\_CODEPAGE '\%d'" \\
-UPDOWNLOAD\_CP           & "GUI-OPTION: UPDOWNLOAD\_CP '\%d'" \\
-SNC\_PARTNERNAME         & "GUI-OPTION: SNC name '\%s'" \\
-SNC\_QOP                 & "GUI-OPTION: SNC\_QOP '\%s'" \\
-SNC\_LIB                 & "GUI-OPTION: SNC is set to: \%s" \\ 
-SAPGUI\_INPLACE          & "GUI-OPTION: environment variable SAPGUI\_INPLACE is on" \\
+DPTRACE                  & ``GUI-OPTION: Trace set to \%d'' \\
+TDW\_HEXDUMP             & ``GUI-OPTION: Hexdump enabled'' \\
+TDW\_WORKDIR             & ``GUI-OPTION: working directory `\%s\''' \\
+TDW\_SPLASHSRCEENOFF     & ``GUI-OPTION: Splash Screen Off'' / ``GUI-OPTION: Splash Screen On'' \\
+TDW\_REPLYTIMEOUT        & ``GUI-OPTION: reply timeout \%d milliseconds'' \\
+TDW\_PLAYBACKTIMEOUT     & ``GUI-OPTION: PlaybackTimeout  set to \%d milliseconds'' \\ 
+TDW\_NOCOMPRESS          & ``GUI-OPTION: no compression read'' \\
+TDW\_EXPERT              & ``GUI-OPTION: expert mode'' \\
+TDW\_PLAYBACKPROGRESS    & ``GUI-OPTION: PlaybackProgress'' \\
+TDW\_PLAYBACKNETTRAFFIC  & ``GUI-OPTION: PlaybackNetTraffic'' \\
+TDW\_PLAYLOG             & ``GUI-OPTION: /PlayLog is YES, file \%s'' \\
+TDW\_PLAYTIME            & ``GUI-OPTION: /PlayTime set to \%d milliseconds'' \\
+TDW\_LOGFILE             & ``GUI-OPTION: TDW\_LOGFILE `\%s\''' \\
+TDW\_WAN                 & ``GUI-OPTION: WAN - low speed connection enabled'' \\
+TDW\_FULLMENU            & ``GUI-OPTION: FullMenu enabled'' \\
+SAP\_CP / SAP\_CODEPAGE  & ``GUI-OPTION: SAP\_CODEPAGE `\%d\''' \\
+UPDOWNLOAD\_CP           & ``GUI-OPTION: UPDOWNLOAD\_CP `\%d\''' \\
+SNC\_PARTNERNAME         & ``GUI-OPTION: SNC name `\%s\''' \\
+SNC\_QOP                 & ``GUI-OPTION: SNC\_QOP `\%s\''' \\
+SNC\_LIB                 & ``GUI-OPTION: SNC is set to: \%s'' \\ 
+SAPGUI\_INPLACE          & ``GUI-OPTION: environment variable SAPGUI\_INPLACE is on'' \\
 \hline  
 \end{tabular}
 \end{center}
@@ -222,7 +223,7 @@ SAPGUI\_INPLACE          & "GUI-OPTION: environment variable SAPGUI\_INPLACE is 
 .text:6440EE1F                 call    FEWTraceError
 \end{lstlisting}
 
-\IFRU{А теперь, можем ли мы найти строку \IT{"data record mode switched on"}?}{Now, can we find \IT{"data record mode switched on"} string?}
+\IFRU{А теперь, можем ли мы найти строку \IT{``data record mode switched on''}?}{Now, can we find \IT{``data record mode switched on''} string?}
 \IFRU{Да, и есть только одна ссылка на эту строку в функции}{Yes, and here is the only reference in function} \TT{CDwsGui::PrepareInfoWindow()}.
 \IFRU{Откуда я узнал имена классов/методов? Здесь много специальных отладочных вызовов пишущих в лог-файл вроде}
 {How do I know class/method names? There is a lot of special debugging calls writing to log-files like}:
@@ -247,7 +248,7 @@ SAPGUI\_INPLACE          & "GUI-OPTION: environment variable SAPGUI\_INPLACE is 
 
 \IFRU{Они \textbf{очень} полезны}{It's \textbf{very} useful}.
 
-\IFRU{Посмотрим содержимое функции "надоедливого всплывающего окна"}{So let's see contents of that nagging pop-up window function}:
+\IFRU{Посмотрим содержимое функции ``надоедливого всплывающего окна''}{So let's see contents of that nagging pop-up window function}:
 
 \begin{lstlisting}
 .text:64404F4F CDwsGui__PrepareInfoWindow proc near

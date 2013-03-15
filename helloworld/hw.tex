@@ -3,7 +3,7 @@
 \section{Hello, world!}
 \label{sec:helloworld}
 
-\IFRU{Начнем с знаменитого примера из книги}{Let's start with famous example from the book} "The C programming Language"\footnote{\url{http://en.wikipedia.org/wiki/The_C_Programming_Language}}:
+\IFRU{Начнем с знаменитого примера из книги}{Let's start with famous example from the book} ``The C programming Language''\footnote{\url{http://en.wikipedia.org/wiki/The_C_Programming_Language}}:
 
 \lstinputlisting{helloworld/1_1.c}
 
@@ -40,8 +40,8 @@ _TEXT	ENDS
 \IFRU{В нашем случае, этот файл состоит из двух сегментов: \TT{CONST} (для данных-констант) и \TT{\_TEXT} (для кода).}
 {In our case, the file contain two segments: \TT{CONST} (for data constants) and \TT{\_TEXT} (for code).} 
 
-\IFRU{Строка \TT{"hello, world"} в \CCpp имеет тип \TT{const char*}, однако не имеет имени.}
-{The string \TT{"hello, world"} in \CCpp has type \TT{const char*}, however hasn't its own name.}
+\IFRU{Строка \TT{``hello, world''} в \CCpp имеет тип \TT{const char*}, однако не имеет имени.}
+{The string \TT{``hello, world''} in \CCpp has type \TT{const char*}, however hasn't its own name.}
 
 \IFRU{Но компилятору нужно как-то с ней работать, так что он дает ей внутреннее имя \TT{\$SG3830}.}
 {But compiler need to work with this string somehow, so it define internal name \TT{\$SG3830} for it.}
@@ -76,42 +76,46 @@ _TEXT	ENDS
 {mean add 4 to the value in \ESP register.}
 
 \IFRU
-{Так как, это 32-битный код, для передачи адреса нужно аккурат 4 байта. В x64-коде это 8 байт.}
-{Since it is 32-bit code, we need exactly 4 bytes for address passing through the stack. 
+{Почему 4? Так как, это 32-битный код, для передачи адреса нужно аккурат 4 байта. В x64-коде это 8 байт.}
+{Why 4? Since it is 32-bit code, we need exactly 4 bytes for address passing through the stack. 
 It's 8 bytes in x64-code}
+
+\TT{``ADD ESP, 4''} \IFRU{эквивалентно \TT{``POP регистр''}, но без использования какого-либо регистра\footnote{Флаги
+процессора, впрочем, модифицируются}.}
+{is equivalent to \TT{``POP register''} but without any register usage\footnote{CPU flags, however, modified}.}
 
 \IFRU
 {Некоторые компиляторы, например Intel C++ Compiler, в этой же ситуации, могут вместо 
 \ADD сгенерировать \TT{POP ECX} (это можно встретить например в коде Oracle RDBMS, им скомпилированном), 
 что почти то же самое, только портится значение в регистре \ECX.}
 {Some compilers like Intel C++ Compiler, at the same point, could emit \TT{POP ECX} 
-instead of \ADD (for example, this can be observed in Oracle RDBMS code, compiled by Intel compiler), 
+instead of \ADD (for example, this can be observed in Oracle RDBMS code, compiled by Intel C++ compiler), 
 and this instruction has almost the same effect, but \ECX register contents will be rewritten.}
 
 \IFRU
 {Возможно, компилятор применяет \TT{POP ECX} потому что эта инструкция короче (1 байт против 3).}
-{Probably, Intel compiler using \TT{POP ECX} because this instruction's opcode is shorter then 
+{Probably, Intel C++ compiler using \TT{POP ECX} because this instruction's opcode is shorter then 
 \TT{ADD ESP, x} (1 byte against 3).}
 
-\IFRU{О стеке можно прочитать в соответствующем разделе}{More about stack in relevant section}~\ref{sec:stack}.
+\IFRU{О стеке можно прочитать в соответствующем разделе}{Read more about stack in relevant section}~\ref{sec:stack}.
 
-\IFRU{После вызова \printf, в оригинальном коде на \CCpp было \TT{return 0} 
-- вернуть 0 в качестве результата функции \main.} 
+\IFRU{После вызова \printf, в оригинальном коде на \CCpp указано \TT{return 0} ~--- вернуть 0 
+в качестве результата функции \main.} 
 {After \printf call, in original \CCpp code was \TT{return 0} ~--- return zero as a \main function result.} 
 
 \IFRU{В сгенерированном коде это обеспечивается инструкцией}
 {In the generated code this is implemented by instruction} \TT{XOR EAX, EAX} 
 
 \IFRU
-{\XOR, на самом деле, как легко догадаться, "исключающее ИЛИ"}
-{\XOR, in fact, just "eXclusive OR"}
+{\XOR, на самом деле, как легко догадаться, ``исключающее ИЛИ''}
+{\XOR, in fact, just ``eXclusive OR''}
 \footnote{\url{http://en.wikipedia.org/wiki/Exclusive_or}}, 
 \IFRU
 {но компиляторы часто используют его вместо простого}
 {but compilers using it often instead of}
 \TT{MOV EAX, 0} ~--- 
 \IFRU
-{снова опкод немного короче (2 байта против 5).}
+{потому что снова опкод короче (2 байта против 5).}
 {slightly shorter opcode again (2 bytes against 5).}
 
 \IFRU{Бывает так, что некоторые компиляторы генерируют}{Some compilers emitting} 
@@ -134,7 +138,7 @@ return control to operation system.}
 {After, with the \IDA disassembler assistance, let's see how \main function was created.} 
 
 \IFRU{С другой стороны, мы можем посмотреть результат работы GCC при помощи ключа}
-{Note: we could also see GCC assembler result applying option} \TT{-S -masm=intel})
+{Note: we could also see GCC assembler result applying option} \TT{-S -masm=intel}
 
 \begin{lstlisting}
 main            proc near
@@ -155,28 +159,29 @@ main            endp
 \end{lstlisting}
 
 \IFRU{Почти то же самое. 
-Адрес строки "hello, world" лежащей в сегменте данных, в начале сохраняется в \EAX, затем записывается в стек.
+Адрес строки ``hello, world'' лежащей в сегменте данных, в начале сохраняется в \EAX, затем записывается в стек.
 А еще в прологе функции мы видим \TT{AND ESP, 0FFFFFFF0h} ~--- 
-эта инструкция выравнивает значение в \ESP по 16-байтной границе, делая некоторые значения 
+эта инструкция выравнивает значение в \ESP по 16-байтной границе, делая все значения 
 в стеке также выровненными по этой границе (процессор более эффективно работает с переменными расположенными
 в памяти по адресам кратным 4 или 16)\footnote{\URLWPDA}.}
 {Almost the same.
-Address of "hello world" string (stored in data segment) is saved in \EAX register first, then it stored into stack.
+Address of ``hello world'' string (stored in data segment) is saved in \EAX register first, then it stored into stack.
 Also, in function prologue we see \TT{AND ESP, 0FFFFFFF0h} ~--- 
-this instruction aligning \ESP value on 16-byte border, resulting some values in stack aligned too
+this instruction aligning \ESP value on 16-byte border, resulting all values in stack aligned too
 (CPU performing better if values it working with are located in memory at addresses aligned by 
-4 or 16 byte border)\URLWPDA.}
+4 or 16 byte border)\footnote{\URLWPDA}.}
 
-\TT{SUB ESP, 10h} \IFRU{выделяет в стеке 16 байт, хотя, как будет видно далее, нам достаточно только 4.}
-{allocate 16 bytes in stack, although, as we could see below, we need only 4.} 
+\TT{SUB ESP, 10h} \IFRU{выделяет в стеке 16 байт, хотя, как будет видно далее, здесь достаточно только 4.}
+{allocate 16 bytes in stack, although, as we could see below, only 4 need here.} 
 
 \IFRU{Это происходит потому что количество выделяемого места в локальном стеке тоже выровнено по 
 16-байтной границе.}{This is because the size of allocated stack is also aligned on 16-byte border.}
 
+% TODO: rewrite.
 \IFRU{Адрес строки (или указатель на строку) затем записывается прямо в стек без помощи инструкции \PUSH.
 \IT{var\_10} по совместительству ~--- и локальная переменная и одновременно аргумент для \printf{}. Подробнее об этом будет ниже.}
 {String address (or pointer to string) is then writing directly into stack space without \PUSH instruction use.
-\IT{var\_10} ~--- is local variable, but also argument for \printf(). Read below about it.}
+\IT{var\_10} ~--- is local variable, but also argument for \printf{}. Read below about it.}
 
 \IFRU{Затем вызывается \printf.}{Then \printf function is called.}
 

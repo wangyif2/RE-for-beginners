@@ -7,7 +7,7 @@
 {Now let's talk about loops one more time. Often, \TT{strlen()} 
 function\footnote{counting characters in string in C language} is implemented using \TT{while()} statement.}
 \IFRU{Например, как это сделано в стандартных библиотеках MSVC:}
-{Here is how it done in MSVC standard libraries:}
+{Here is how it's done in MSVC standard libraries:}
 
 \begin{lstlisting}
 int strlen (const char * str)
@@ -31,7 +31,7 @@ int strlen (const char * str)
 \IFRU{О первой: \MOVSX предназначен для того чтобы взять байт из какого-либо места в памяти и положить его, 
 в нашем случае, в регистр \EDX. 
 Но регистр \EDX ~--- 32-битный. \MOVSX означает \IT{MOV with Sign-Extent}. 
-Оставшиеся биты с 8-го по 31-й \MOVSX сделает еденицей, если исходный байт в памяти имеет знак \IT{минус}, 
+Оставшиеся биты с 8-го по 31-й \MOVSX сделает единицей, если исходный байт в памяти имеет знак \IT{минус}, 
 или заполнит нулями, если знак \IT{плюс}.}
 {About first: \MOVSX is intended to take byte from some place and store value in 32-bit register. 
 \MOVSX meaning \IT{MOV with Sign-Extent}. 
@@ -56,13 +56,15 @@ So if we need to transfer 0xFE value from variable of \Tchar type to \Tint,
 we need to identify its sign and extend it. That is what \MOVSX does.}
 
 \IFRU{См.также об этом раздел}
-{See also more in section} \IT{\SignedNumbersSectionName}~\ref{sec:signednumbers}.
+{See also in section} ``\IT{\SignedNumbersSectionName}''~\ref{sec:signednumbers}.
 
 \IFRU{Хотя, конкретно здесь, компилятору врядли была особая надобность хранить значение \Tchar в регистре \EDX 
-а не его восьмибитной части, скажем, \DL. Но получилось как получилось: должно быть, register allocator
+а не его восьмибитной части, скажем, \DL. Но получилось как получилось: должно быть, 
+register allocator\footnote{функция компилятора распределяющая локальные переменные по регистрам процессора}
 компилятора сработал именно так.}
 {I'm not sure if compiler need to store \Tchar variable in \EDX, it could take 8-bit register part 
-(let's say \DL). But probably, compiler's register allocator works like that.}
+(let's say \DL). But probably, compiler's register allocator\footnote{compiler's function 
+assigning local variables to CPU registers} works like that.}
 
 \IFRU{Позже выполняется \TT{TEST EDX, EDX}. 
 Об инструкции \TEST читайте в разделе о битовых полях~\ref{sec:bitfields}.
@@ -87,7 +89,7 @@ In fact, this instruction is handy only because it is able to replace two instru
 \TT{xor eax, eax / mov al, [...]}.}
 
 \IFRU{С другой стороны, нам очевидно, что здесь можно было бы написать вот так: 
-\TT{mov al, byte ptr [eax] / test al, al} ~--- это тоже самое, хотя старшие биты \EAX будут "замусорены". 
+\TT{mov al, byte ptr [eax] / test al, al} ~--- это тоже самое, хотя старшие биты \EAX будут ``замусорены''. 
 Но, будем считать, что это погрешность компилятора ~--- он не смог сделать код более экономным или более понятным. 
 Строго говоря, компилятор вообще не нацелен на то чтобы генерировать понятный (для человека) код.}
 {On other hand, it is obvious to us that compiler could produce that code: 
@@ -98,7 +100,7 @@ Strictly speaking, compiler is not obliged to emit understandable (to humans) co
 
 \IFRU{Следующая новая инструкция для нас ~--- \SETNZ. В данном случае, если в \AL был не ноль, 
 то \TT{test al, al} выставит флаг \ZF в 0, а \SETNZ, если \TT{ZF==0} 
-(\IT{NZ} значит \IT{not zero}) выставит еденицу в \AL. 
+(\IT{NZ} значит \IT{not zero}) выставит единицу в \AL. 
 Смысл этой процедуры в том, что, если говорить человеческим языком, 
 \IT{если AL не ноль, то выполнить переход на} \TT{loc\_80483F0}.
 Компилятор выдал немного избыточный код, но не будем забывать что оптимизация выключена.}
@@ -113,12 +115,12 @@ Compiler emitted slightly redundant code, but let's not forget that optimization
 \lstinputlisting{\IFRU{strlen/10_2_ru.asm}{strlen/10_2_en.asm}}
 
 \IFRU{Здесь все попроще стало. Но следует отметить, что компилятор обычно может так хорошо использовать регистры 
-только на не очень больших функций с не очень большим количеством локальных переменных.}
+только на не очень больших функциях с не очень большим количеством локальных переменных.}
 {Now it's all simpler. But it is needless to say that compiler could use registers such efficiently 
 only in small functions with small number of local variables.}
 
 \INC/\DEC ~--- \IFRU{это инструкции инкремента-декремента, попросту говоря: 
-увеличить на еденицу или уменьшить.}
+увеличить на единицу или уменьшить.}
 {are increment/decrement instruction, in other words: add 1 to variable or subtract.}
 
 \IFRU{Попробуем GCC 4.4.1 с влюченной оптимизацией (ключ \TT{-O3}):}
@@ -149,7 +151,7 @@ It can be said, it is synonym to \TT{XOR ECX, 0ffffffffh} instruction.
 \NOT and following \ADD calculating pointer difference and subtracting 1. 
 At the beginning \ECX, where pointer to str is stored, inverted and 1 is subtracted from it.}
 
-\IFRU{См. также раздел:}{See also:} \SignedNumbersSectionName~\ref{sec:signednumbers}.
+\IFRU{См. также раздел:}{See also:} ``\SignedNumbersSectionName''~\ref{sec:signednumbers}.
 
 \IFRU{Иными словами, в конце функции, после цикла, происходит примерно следующее:} 
 {In other words, at the end of function, just after loop body, these operations are executed:}

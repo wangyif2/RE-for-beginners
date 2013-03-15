@@ -41,7 +41,7 @@ status word register. This is 16-bit register reflecting current state of FPU.}
 А у Intel P6 появились инструкции \FCOMI/\FCOMIP/\FUCOMI/\FUCOMIP ~--- делающие тоже самое, 
 только напрямую модифицирующие флаги \ZF/\PF/\CF.}
 {For now \CThreeBits bits are set, but unfortunately, CPU before Intel P6
-\footnote{Intel P6 is Pentium Pro, Pentium II, etc} have not any conditional 
+\footnote{Intel P6 is Pentium Pro, Pentium II, etc} hasn't any conditional 
 jumps instructions which are checking these bits. 
 Probably, it is a matter of history (remember: FPU was separate chip in past). 
 Modern CPU starting at Intel P6 has \FCOMI/\FCOMIP/\FUCOMI/\FUCOMIP instructions ~--- 
@@ -77,7 +77,7 @@ but at positions 0 и 2 (in \AH registers)
 \Czero and \Ctwo bits will be leaved.}
 
 \IFRU{Теперь немного о \IT{parity flag}\footnote{флаг четности}. Еще один замечательный рудимент:} 
-{Now let's talk about parity flag. Yet another notable epoch rudiment.}
+{Now let's talk about parity flag. Another notable epoch rudiment.}
 
 \begin{framed}
 \begin{quotation}
@@ -90,10 +90,10 @@ with the FUCOM instructions.\footnote{\href{http://en.wikipedia.org/wiki/Parity_
 \end{framed}
 
 \IFRU
-{Этот флаг выставляется в 1 если количество едениц в последнем результате ~--- четно. И в ноль если ~--- нечетно.}
+{Этот флаг выставляется в 1 если количество единиц в последнем результате ~--- четно. И в ноль если ~--- нечетно.}
 {This flag is to be set to 1 if ones number is even. And to zero if odd.}
 
-\IFRU{Таким образом, что мы имеем, флаг \PF будет выставлен в еденицу, если \Czero и \Ctwo 
+\IFRU{Таким образом, что мы имеем, флаг \PF будет выставлен в единицу, если \Czero и \Ctwo 
 оба нули или оба единицы. 
 И тогда сработает последующий \JP (\IT{jump if PF==1}). 
 Если мы вернемся чуть назад и посмотрим значения \CThreeBits 
@@ -174,9 +174,9 @@ not to store it anywhere.}
 \lstinputlisting{\IFRU{FPU/12_6_ru.asm}{FPU/12_6_en.asm}}
 
 \IFRU{\FUCOMPP ~--- это почти то же что и \FCOM, только выкидывает из стека оба значения после сравнения, 
-а также несколько иначе реагирует на "не-числа".}
+а также несколько иначе реагирует на ``не-числа''.}
 {\FUCOMPP ~--- is almost like \FCOM, but popping both values from stack and handling 
-"not-a-numbers" differently.}
+``not-a-numbers'' differently.}
 
 \IFRU{Немного о \IT{не-числах}}{More about \IT{not-a-numbers}}:
 
@@ -184,21 +184,21 @@ not to store it anywhere.}
 {\footnote{\url{http://en.wikipedia.org/wiki/NaN}}}}
 
 \IFRU
-{FPU умеет работать со специальными переменными, которые числами не являются и называются "не числа" или 
+{FPU умеет работать со специальными переменными, которые числами не являются и называются ``не числа'' или 
 NaN\NANFN{}. 
-Это бесконечность, результат деления на ноль, и так далее. Нечисла бывают "тихие" и "сигнализирующие". 
+Это бесконечность, результат деления на ноль, и так далее. Нечисла бывают ``тихие'' и ``сигнализирующие''. 
 С первыми можно продолжать работать и далее, а вот если вы попытаетесь совершить какую-то операцию 
 с сигнализирующим нечислом, то сработает исключение.}
 {FPU is able to work with special values which are \IT{not-a-numbers} or 
 NaNs\NANFN{}. 
 These are infinity, result of dividing by zero, etc. 
-Not-a-numbers can be "quiet" and "signalling". It is possible to continue to work with "quiet" NaNs, 
-but if one try to do some operation with "signalling" NaNs ~--- an exception will be raised.}
+Not-a-numbers can be ``quiet'' and ``signalling''. It is possible to continue to work with ``quiet'' NaNs, 
+but if one try to do some operation with ``signalling'' NaNs ~--- an exception will be raised.}
 
 \IFRU{Так вот, \FCOM вызовет исключение если любой из операндов ~--- какое-либо нечисло.
-\FUCOM же вызовет исключение только если один из операндов именно "сигнализирующее нечисло".}
+\FUCOM же вызовет исключение только если один из операндов именно ``сигнализирующее нечисло''.}
 {\FCOM will raise exception if any operand ~--- NaN. 
-\FUCOM will raise exception only if any operand ~--- signalling NaN (SNAN).}
+\FUCOM will raise exception only if any operand ~--- signalling NaN (SNaN).}
 
 \IFRU{Далее мы видим \SAHF ~--- это довольно редкая инструкция в коде не использущим FPU. 
 8 бит из \AH перекладываются в младшие 8 бит регистра статуса процессора в таком порядке: 
@@ -269,12 +269,12 @@ return {\_a}. On all other cases, {\_b} will be returned.}
 \lstinputlisting{\IFRU{FPU/12_7_ru.asm}{FPU/12_7_en.asm}}
 
 \IFRU{Почти все что здесь есть уже описано мною, кроме одного: использование \JA после \SAHF. 
-Действительно, инструкции условных переходов "больше", "меньше", "равно" для сравнения беззнаковых чисел 
+Действительно, инструкции условных переходов ``больше'', ``меньше'', ``равно'' для сравнения беззнаковых чисел 
 (\JA, \JAE, \JB, \JBE, \JE/\JZ, \JNA, \JNAE, \JNB, \JNBE, \JNE/\JNZ) проверяют только флаги \CF и \ZF. 
 И биты \CThreeBits после сравнения перекладываются в эти флаги аккурат так, 
 чтобы перечисленные инструкции переходов могли работать. \JA сработает если \CF и \ZF обнулены.}
 {It is almost the same except one: \JA usage instead of \SAHF. 
-Actually, conditional jump instructions checking "larger", "lesser" or "equal" for unsigned number comparison 
+Actually, conditional jump instructions checking ``larger'', ``lesser'' or ``equal'' for unsigned number comparison 
 (\JA, \JAE, \JB, \JBE, \JE/\JZ, \JNA, \JNAE, \JNB, \JNBE, \JNE/\JNZ) are checking only \CF and \ZF flags. 
 And \CThreeBits bits after comparison are moving into these flags exactly in the same fashion 
 so conditional jumps will work here. \JA will work if both \CF are \ZF zero.}

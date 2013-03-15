@@ -11,8 +11,8 @@ in memory together, not necessary of the same type.}
 
 \newcommand{\FNSYSTEMTIME}{\footnote{\href{http://msdn.microsoft.com/en-us/library/ms724950(VS.85).aspx}{MSDN: SYSTEMTIME structure}}}
 
-\IFRU{Возьмем, к примеру, структуру SYSTEMTIME\FNSYSTEMTIME из win32 описывающую время.}
-{Let's take SYSTEMTIME\FNSYSTEMTIME win32 structure describing time.}
+\IFRU{Возьмем, к примеру, структуру SYSTEMTIME\FNSYSTEMTIME{} из win32 описывающую время.}
+{Let's take SYSTEMTIME\FNSYSTEMTIME{} win32 structure describing time.}
 
 \IFRU{Она объявлена так:}{That's how it's defined:}
 
@@ -256,6 +256,7 @@ This instruction return information about current CPU and its features.}
 {If \EAX is set to 1 before instruction execution, \CPUID will return this information packed into \EAX
 register:}
 
+\begin{center}
 \begin{tabular}{ | l | l | }
 \hline
 3:0 & Stepping \\
@@ -266,6 +267,7 @@ register:}
 27:20 & Extended Family \\
 \hline
 \end{tabular}
+\end{center}
 
 \newcommand{\FNGCCAS}{\footnote{\href{http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html}
 {\IFRU{Подробнее о встроенном ассемблере GCC}{More about internal GCC assembler}}}}
@@ -353,7 +355,7 @@ f variable is used directly. But it's easier to understand it all considering un
 
 \IFRU{А что сделает GCC 4.4.1 с опцией \TT{-O3}?}{What GCC 4.4.1 with \TT{-O3} will do?}
 
-\lstinputlisting{structs/15_2_gcc_O3_en.asm}
+\lstinputlisting{\IFRU{structs/15_2_gcc_O3_ru.asm}{structs/15_2_gcc_O3_en.asm}}
 
 \IFRU{Да, функция \TT{f()} в целом понятна. Однако, что интересно, еще при компиляции, 
 не взирая на мешанину с полями структуры, GCC умудрился вычислить результат функции \TT{f(1.234)} и 
